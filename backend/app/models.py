@@ -4,7 +4,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
 
-# Many-to-Many Bridge table for Tournaments and Teams
 tournament_teams = Table(
     'tournament_teams',
     Base.metadata,
@@ -36,7 +35,7 @@ class TournamentModel(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     teams = relationship("TeamModel", secondary=tournament_teams, back_populates="tournaments")
-    matches = relationship("MatchModel", back_populates="tournament")
+    matches = relationship("MatchModel", back_populates="tournament", cascade="all, delete-orphan")
 
 class TeamModel(Base):
     __tablename__ = "teams"
@@ -47,12 +46,12 @@ class TeamModel(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     tournaments = relationship("TournamentModel", secondary=tournament_teams, back_populates="teams")
-    players = relationship("PlayerModel", back_populates="team")
+    players = relationship("PlayerModel", back_populates="team", cascade="all, delete-orphan")
 
 class PlayerModel(Base):
     __tablename__ = "players"
     id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    team_id = Column(UUID(as_uuid=True), ForeignKey('teams.id', ondelete='SET NULL'), nullable=True)
+    team_id = Column(UUID(as_uuid=True), ForeignKey('teams.id', ondelete='CASCADE'), nullable=False)
     name = Column(String(100), nullable=False)
     phone = Column(String(20), nullable=True)
     playing_role = Column(String(50), nullable=True)

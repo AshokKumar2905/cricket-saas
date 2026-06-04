@@ -3,9 +3,6 @@ from typing import Optional, List
 from datetime import date
 from uuid import UUID
 
-# ==========================================
-# 1. AUTHENTICATION SCHEMAS
-# ==========================================
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
@@ -27,9 +24,6 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-# ==========================================
-# 2. TOURNAMENT SCHEMAS
-# ==========================================
 class TournamentCreate(BaseModel):
     name: str
     location: Optional[str] = None
@@ -49,9 +43,6 @@ class TournamentResponse(BaseModel):
     status: str
     model_config = ConfigDict(from_attributes=True)
 
-# ==========================================
-# 3. TEAM SCHEMAS
-# ==========================================
 class TeamCreate(BaseModel):
     name: str
     captain_name: Optional[str] = None
@@ -64,13 +55,10 @@ class TeamResponse(BaseModel):
     logo_url: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
-# ==========================================
-# 4. PLAYER SCHEMAS
-# ==========================================
 class PlayerCreate(BaseModel):
     name: str
     phone: Optional[str] = None
-    playing_role: Optional[str] = "Batsman"  # e.g., Batsman, Bowler, All-Rounder, Wicketkeeper
+    playing_role: Optional[str] = "Batsman"
     batting_style: Optional[str] = "Right-hand Bat"
     bowling_style: Optional[str] = "None"
 
@@ -84,9 +72,6 @@ class PlayerResponse(BaseModel):
     bowling_style: Optional[str]
     model_config = ConfigDict(from_attributes=True)
 
-# ==========================================
-# 5. MATCH / FIXTURE SCHEMAS (NEW)
-# ==========================================
 class MatchCreate(BaseModel):
     team_a_id: UUID
     team_b_id: UUID
