@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: transparent;
+  --foreground: #f8fafc;
 }
 
 @theme inline {
@@ -12,15 +12,71 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ==========================================================================
+   CRICKET SAAS SYSTEM GLOBAL BACKDROP & TEXT READABILITY FIX
+   ========================================================================== */
+
+#theme-root-mount {
+  background-color: #030712 !important;
+  background-image: none !important;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Force intermediate structural parent views to be perfectly transparent */
+main, 
+section, 
+.flex-1 {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* FIX: Targets structural cards and forms, giving them a rich stadium navy
+   frosted coat. This separates text layers from the bright stadium image lights.
+*/
+#theme-root-mount div.bg-gradient-to-br,
+#theme-root-mount div.bg-slate-900,
+#theme-root-mount div.bg-zinc-900,
+#theme-root-mount div[class*="bg-[#0b1536]"],
+#theme-root-mount div[class*="bg-slate-900"],
+#theme-root-mount div[class*="bg-zinc-900"] {
+  background-color: rgba(10, 16, 36, 0.92) !important;
+  backdrop-filter: blur(20px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(140%) !important;
+  border: 1px solid rgba(30, 64, 175, 0.4) !important; /* Elegant pitch perimeter stroke */
+}
+
+/* Fix inner block elements and code blocks */
+#theme-root-mount div.bg-slate-950,
+#theme-root-mount div[class*="bg-slate-950"] {
+  background-color: rgba(3, 7, 18, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Fix running statistics micro-cards inside the live overview */
+#theme-root-mount div[class*="bg-slate-900/60"],
+#theme-root-mount div[class*="bg-slate-900/40"],
+#theme-root-mount div[class*="bg-slate-950/60"],
+#theme-root-mount div[class*="bg-slate-950/80"] {
+  background-color: rgba(4, 9, 26, 0.8) !important;
+  border: 1px solid rgba(30, 64, 175, 0.25) !important;
+}
+
+/* Fix Input Boxes to ensure form metrics are fully legible */
+#theme-root-mount form input,
+#theme-root-mount form select,
+#theme-root-mount input[type="text"],
+#theme-root-mount input[type="email"],
+#theme-root-mount input[type="password"],
+#theme-root-mount input[type="number"],
+#theme-root-mount input[type="tel"],
+#theme-root-mount select {
+  background-color: rgba(2, 6, 23, 0.95) !important;
+  border: 1px solid rgba(71, 85, 105, 0.6) !important;
+  color: #ffffff !important;
+}
+
+#theme-root-mount form input:focus,
+#theme-root-mount select:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
 }

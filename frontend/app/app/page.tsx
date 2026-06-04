@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Trophy, Calendar, Shield, LogOut, ChevronRight, Mail, Lock, Plus, Users, MapPin, Play,
-  ArrowLeft, CheckCircle, Radio, Sparkles, AlertCircle, Tv, Zap, UserPlus
+  Trophy, Calendar, LogOut, ChevronRight, Mail, Lock, Users, 
+  ArrowLeft, CheckCircle, Radio, UserPlus, Phone, Activity
 } from 'lucide-react';
 
 export default function HomeApplicationWorkspace() {
@@ -190,160 +190,213 @@ export default function HomeApplicationWorkspace() {
   };
 
   return (
-    <div className="w-full bg-[#020617] text-slate-100 flex-1 flex flex-col relative min-h-screen">
+    <div className="w-full flex-1 flex flex-col relative min-h-screen bg-transparent">
+      {/* Upper Operator Dashboard Header Bar */}
       {token && (
-        <div className="max-w-7xl mx-auto w-full px-6 pt-6 flex justify-between items-center">
-          <div className="text-xs font-mono text-emerald-400">Namespace: {organizerEmail}</div>
-          <button onClick={() => { localStorage.clear(); setToken(null); setActiveTournament(null); setActiveMatch(null); setActiveTeam(null); }} className="text-xs bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl text-zinc-400 font-bold flex items-center gap-1.5 hover:text-white transition-colors">
-            <LogOut className="w-3.5 h-3.5" /> Log Out
+        <div className="max-w-7xl mx-auto w-full px-6 pt-6 flex justify-between items-center relative z-20">
+          <div className="text-xs font-mono text-emerald-400 bg-[#0b1536]/40 border border-blue-900/30 px-3 py-1.5 rounded-xl flex items-center gap-2 backdrop-blur-sm">
+            <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-400" /> Operator Instance: <span className="text-white font-bold">{organizerEmail}</span>
+          </div>
+          <button 
+            onClick={() => { localStorage.clear(); setToken(null); setActiveTournament(null); setActiveMatch(null); setActiveTeam(null); }} 
+            className="text-xs bg-slate-900/80 border border-slate-800 px-4 py-2 rounded-xl text-slate-400 font-bold flex items-center gap-1.5 hover:text-white hover:border-slate-700 transition-all shadow-md active:scale-95"
+          >
+            <LogOut className="w-3.5 h-3.5" /> De-authorize Session
           </button>
         </div>
       )}
 
-      <div className="flex-1 w-full flex flex-col">
+      <div className="flex-1 w-full flex flex-col relative z-10 bg-transparent">
         <AnimatePresence mode="wait">
           {!token ? (
-            <motion.div key="auth" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-md w-full mx-auto py-16 px-4">
-              <div className="bg-[#0a1128] border border-blue-950 rounded-3xl p-8 shadow-2xl">
-                <div className="flex gap-4 mb-6 border-b border-blue-950/60 pb-2">
-                  <button onClick={() => setIsLoginView(true)} className={`flex-1 pb-3 text-xs font-bold uppercase ${isLoginView ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-slate-500'}`}>Login</button>
-                  <button onClick={() => setIsLoginView(false)} className={`flex-1 pb-3 text-xs font-bold uppercase ${!isLoginView ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-slate-500'}`}>Signup</button>
+            /* LAYER 1: AUTHENTICATION ENTRANCE CONFIGURATION */
+            <motion.div key="auth" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} className="max-w-md w-full mx-auto py-20 px-4 bg-transparent">
+              <div className="bg-gradient-to-br from-[#0b1536]/90 to-[#070d1f]/95 border border-blue-900/40 rounded-3xl p-8 shadow-2xl backdrop-blur-md relative overflow-hidden">
+                <div className="absolute -right-12 -top-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+                
+                <div className="flex bg-slate-950/80 border border-slate-900 p-1 rounded-xl mb-6">
+                  <button type="button" onClick={() => { setIsLoginView(true); setStatusMessage(null); }} className={`flex-1 py-2 text-[10px] uppercase font-mono font-bold tracking-wider rounded-lg transition-all ${isLoginView ? 'bg-emerald-500 text-slate-950 shadow-md font-black' : 'text-slate-500 hover:text-slate-300'}`}>Operator Login</button>
+                  <button type="button" onClick={() => { setIsLoginView(false); setStatusMessage(null); }} className={`flex-1 py-2 text-[10px] uppercase font-mono font-bold tracking-wider rounded-lg transition-all ${!isLoginView ? 'bg-emerald-500 text-slate-950 shadow-md font-black' : 'text-slate-500 hover:text-slate-300'}`}>Create Tenant</button>
                 </div>
+
                 <form onSubmit={isLoginView ? handleLogin : handleSignup} className="space-y-4">
-                  {!isLoginView && <input type="text" placeholder="Operator Name" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-[#020617] border border-blue-950 rounded-xl px-4 py-3 text-sm text-zinc-200" />}
-                  <input type="email" placeholder="Email Address" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full bg-[#020617] border border-blue-950 rounded-xl px-4 py-3 text-sm text-zinc-200" />
-                  <input type="password" placeholder="Passphrase" required value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full bg-[#020617] border border-blue-950 rounded-xl px-4 py-3 text-sm text-zinc-200" />
-                  {statusMessage && <div className="p-3 text-xs rounded-xl bg-blue-950 text-slate-300">{statusMessage.text}</div>}
-                  <button type="submit" className="w-full h-11 bg-emerald-500 text-zinc-950 font-black rounded-xl text-xs uppercase tracking-wider hover:bg-emerald-400 transition-all">Continue</button>
+                  {!isLoginView && (
+                    <div className="relative">
+                      <UserPlus className="absolute left-4 top-3.5 w-4 h-4 text-slate-500" />
+                      <input type="text" placeholder="Operator Legal Name" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-emerald-500 text-white transition-colors" />
+                    </div>
+                  )}
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-3.5 w-4 h-4 text-slate-500" />
+                    <input type="email" placeholder="Email Address" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-emerald-500 text-white transition-colors" />
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-3.5 w-4 h-4 text-slate-500" />
+                    <input type="password" placeholder="Passphrase Code" required value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-emerald-500 text-white transition-colors" />
+                  </div>
+                  {!isLoginView && (
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-3.5 w-4 h-4 text-slate-500" />
+                      <input type="tel" placeholder="Contact Mobile Sequence" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="w-full bg-slate-950/60 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-emerald-500 text-white transition-colors" />
+                    </div>
+                  )}
+
+                  {statusMessage && (
+                    <div className={`p-3.5 text-xs rounded-xl border backdrop-blur-sm ${statusMessage.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}>
+                      {statusMessage.text}
+                    </div>
+                  )}
+
+                  <button type="submit" className="w-full h-12 bg-emerald-500 text-slate-950 font-black rounded-xl text-xs uppercase tracking-widest hover:bg-emerald-400 transition-all shadow-xl shadow-emerald-500/10 mt-6">Authorize Channel</button>
                 </form>
               </div>
             </motion.div>
           ) : activeMatch ? (
-            // LIVE SCORING LAYER
-            <motion.div key="scoring" className="max-w-7xl mx-auto w-full px-6 py-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 bg-[#0a1128] border border-blue-950 p-6 rounded-3xl">
-                <button onClick={() => setActiveMatch(null)} className="text-xs uppercase text-slate-400 hover:text-emerald-400 flex items-center gap-1 mb-4 font-mono"><ArrowLeft className="w-3.5 h-3.5" /> Back to Workspace</button>
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className={`p-6 rounded-2xl border ${currentInnings === 'A' ? 'bg-zinc-900/60 border-emerald-500' : 'border-blue-950'}`} onClick={() => setCurrentInnings('A')}>
-                    <span className="text-xs uppercase text-slate-500 font-bold block">Innings 1</span>
-                    <div className="text-4xl font-black mt-2">{scoreA.runs}/{scoreA.wickets}</div>
-                    <span className="text-xs font-mono block mt-2">Overs: {scoreA.overs}.{scoreA.balls}</span>
+            /* LAYER 2: TELEMETRY LIVE SCORING PANEL CONSOLE */
+            <motion.div key="scoring" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="max-w-7xl mx-auto w-full px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8 bg-transparent">
+              <div className="lg:col-span-2 bg-gradient-to-br from-[#0b1536]/90 to-[#070d1f]/95 border border-blue-900/40 rounded-3xl p-6 shadow-2xl backdrop-blur-sm">
+                <button onClick={() => setActiveMatch(null)} className="text-[10px] uppercase font-mono font-bold text-slate-400 hover:text-emerald-400 flex items-center gap-1.5 mb-6 bg-slate-950/80 border border-slate-800 px-3 py-1.5 rounded-lg transition-colors"><ArrowLeft className="w-3.5 h-3.5" /> Return to Control Room</button>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                  <div className={`p-6 rounded-2xl border transition-all cursor-pointer ${currentInnings === 'A' ? 'bg-slate-950/80 border-emerald-500/60 ring-1 ring-emerald-500/20' : 'bg-slate-950/30 border-slate-800 hover:border-slate-700'}`} onClick={() => setCurrentInnings('A')}>
+                    <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 font-bold block">Innings 1 (Team A)</span>
+                    <div className="text-5xl font-black mt-2 text-white">{scoreA.runs}<span className="text-slate-500 font-light text-3xl">/{scoreA.wickets}</span></div>
+                    <span className="inline-block text-[11px] font-mono bg-slate-900/80 px-2 py-0.5 rounded text-slate-400 mt-3 border border-slate-800">Overs: {scoreA.overs}.{scoreA.balls}</span>
                   </div>
-                  <div className={`p-6 rounded-2xl border ${currentInnings === 'B' ? 'bg-zinc-900/60 border-emerald-500' : 'border-blue-950'}`} onClick={() => setCurrentInnings('B')}>
-                    <span className="text-xs uppercase text-slate-500 font-bold block">Innings 2</span>
-                    <div className="text-4xl font-black mt-2">{scoreB.runs}/{scoreB.wickets}</div>
-                    <span className="text-xs font-mono block mt-2">Overs: {scoreB.overs}.{scoreB.balls}</span>
+                  <div className={`p-6 rounded-2xl border transition-all cursor-pointer ${currentInnings === 'B' ? 'bg-slate-950/80 border-emerald-500/60 ring-1 ring-emerald-500/20' : 'bg-slate-950/30 border-slate-800 hover:border-slate-700'}`} onClick={() => setCurrentInnings('B')}>
+                    <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 font-bold block">Innings 2 (Team B)</span>
+                    <div className="text-5xl font-black mt-2 text-white">{scoreB.runs}<span className="text-slate-500 font-light text-3xl">/{scoreB.wickets}</span></div>
+                    <span className="inline-block text-[11px] font-mono bg-slate-900/80 px-2 py-0.5 rounded text-slate-400 mt-3 border border-slate-800">Overs: {scoreB.overs}.{scoreB.balls}</span>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-3 justify-center p-6 bg-slate-950 rounded-2xl">
-                  {[0, 1, 2, 3, 4, 6].map((run) => (
-                    <button key={run} onClick={() => handleBallDelivered(run, false)} className="w-12 h-12 bg-blue-950 hover:bg-blue-900 text-white rounded-xl font-bold">{run}</button>
-                  ))}
-                  <button onClick={() => handleBallDelivered(0, true)} className="px-6 h-12 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl font-black text-xs uppercase tracking-wider">Wicket</button>
+
+                <div className="p-6 bg-slate-950/60 rounded-2xl border border-slate-900">
+                  <span className="text-[10px] uppercase font-mono font-bold tracking-widest text-slate-400 block mb-4 text-center">Interactive Micro-Metrics Trigger</span>
+                  <div className="flex flex-wrap gap-3 justify-center">
+                    {[0, 1, 2, 3, 4, 6].map((run) => (
+                      <button key={run} onClick={() => handleBallDelivered(run, false)} className="w-14 h-14 bg-blue-950/40 hover:bg-blue-900/80 border border-blue-900/40 hover:border-blue-700 text-white rounded-xl font-black text-sm transition-all shadow-md active:scale-90">{run}</button>
+                    ))}
+                    <button onClick={() => handleBallDelivered(0, true)} className="px-6 h-14 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all active:scale-95">Wicket</button>
+                  </div>
                 </div>
               </div>
-              <div className="bg-[#0a1128] border border-blue-950 p-6 rounded-3xl flex flex-col items-center justify-center min-h-[300px]">
-                <motion.div className="w-24 h-24 rounded-full bg-gradient-to-br from-red-600 to-red-950 shadow-2xl cursor-pointer" animate={{ rotate: isBallHovered ? 360 : 0 }} transition={{ ease: "linear", duration: 4, repeat: Infinity }} onHoverStart={() => setIsBallHovered(true)} onHoverEnd={() => setIsBallHovered(false)} />
-                <span className="text-[10px] font-mono text-slate-500 uppercase mt-4">Telemetry Stream Engaged</span>
+
+              {/* Ball Telemetry Animation Module */}
+              <div className="bg-[#0b1536]/40 border border-blue-900/30 p-6 rounded-3xl flex flex-col items-center justify-center min-h-[320px] shadow-2xl backdrop-blur-sm relative">
+                <div className="absolute inset-0 bg-cover bg-center opacity-5 pointer-events-none rounded-3xl" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=600')` }} />
+                <motion.div 
+                  className="w-24 h-24 rounded-full bg-gradient-to-br from-red-600 via-red-700 to-red-950 border-2 border-red-500/30 shadow-2xl shadow-red-950 cursor-pointer" 
+                  animate={{ rotate: isBallHovered ? 360 : 0, scale: isBallHovered ? 1.05 : 1 }} 
+                  transition={{ ease: "linear", duration: 4, repeat: Infinity }} 
+                  onHoverStart={() => setIsBallHovered(true)} 
+                  onHoverEnd={() => setIsBallHovered(false)} 
+                />
+                <span className="text-[10px] font-mono tracking-widest text-slate-400 uppercase mt-5 flex items-center gap-1.5 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-slate-800 shadow">
+                  <Activity className="w-3 h-3 text-emerald-400 animate-pulse" /> Telemetry Stream Engaged
+                </span>
               </div>
             </motion.div>
           ) : activeTournament ? (
-            // TOURNAMENT WORKSPACE CONTROL LAYER (TEAMS, PLAYERS, FIXTURES)
-            <motion.div key="control-room" className="max-w-7xl mx-auto w-full px-6 py-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            /* LAYER 3: TOURNAMENT RADAR CONTROL ROOM LAYER */
+            <motion.div key="control-room" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="max-w-7xl mx-auto w-full px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8 bg-transparent">
               <div className="space-y-6">
-                <button onClick={() => { setActiveTournament(null); setActiveTeam(null); }} className="text-xs uppercase text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-mono"><ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard</button>
+                <button onClick={() => { setActiveTournament(null); setActiveTeam(null); }} className="text-[10px] uppercase font-mono font-bold text-slate-400 hover:text-emerald-400 flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 px-3 py-1.5 rounded-lg transition-colors"><ArrowLeft className="w-3.5 h-3.5" /> Return to Leagues Deck</button>
                 
-                {/* 1. Register Franchise Team Card */}
-                <div className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl">
-                  <h3 className="text-sm font-black uppercase text-slate-200 mb-4 flex items-center gap-2"><Users className="w-4 h-4 text-emerald-400" /> Register Franchise</h3>
+                {/* Franchise Creator Card */}
+                <div className="bg-gradient-to-br from-[#0b1536]/60 to-[#070d1f]/80 border border-blue-900/30 p-6 rounded-2xl shadow-xl backdrop-blur-sm">
+                  <h3 className="text-xs font-black uppercase text-slate-200 mb-4 flex items-center gap-2"><Users className="w-4 h-4 text-emerald-400" /> Register Franchise</h3>
                   <form onSubmit={handleCreateTeam} className="space-y-3">
-                    <input type="text" placeholder="Team Name" required value={teamData.name} onChange={(e) => setTeamData({...teamData, name: e.target.value})} className="w-full bg-[#020617] border border-blue-950 rounded-xl p-3 text-xs" />
-                    <input type="text" placeholder="Captain Name" value={teamData.captain_name} onChange={(e) => setTeamData({...teamData, captain_name: e.target.value})} className="w-full bg-[#020617] border border-blue-950 rounded-xl p-3 text-xs" />
-                    <button type="submit" className="w-full h-10 bg-emerald-500 text-zinc-950 text-xs font-bold uppercase tracking-wider rounded-xl">Save Franchise</button>
+                    <input type="text" placeholder="Franchise Team Name" required value={teamData.name} onChange={(e) => setTeamData({...teamData, name: e.target.value})} className="w-full bg-slate-950/40 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+                    <input type="text" placeholder="Captain Name" value={teamData.captain_name} onChange={(e) => setTeamData({...teamData, captain_name: e.target.value})} className="w-full bg-slate-950/40 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+                    <button type="submit" className="w-full h-11 bg-emerald-500 text-slate-950 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-emerald-400 transition-all shadow-md">Commit Franchise</button>
                   </form>
                 </div>
 
-                {/* 2. Roster Management Card (Dynamic Player Additions) */}
+                {/* Athlete Roster Entry System */}
                 {activeTeam ? (
-                  <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl">
-                    <h3 className="text-sm font-black uppercase text-slate-200 mb-1 flex items-center gap-2"><UserPlus className="w-4 h-4 text-emerald-400" /> Add to {activeTeam.name}</h3>
-                    <p className="text-[10px] text-slate-500 mb-4 font-mono">Assign athlete variables to active roster</p>
+                  <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="bg-gradient-to-br from-[#0b1536]/60 to-[#070d1f]/80 border border-blue-900/30 p-6 rounded-2xl shadow-xl backdrop-blur-sm">
+                    <h3 className="text-xs font-black uppercase text-slate-200 mb-1 flex items-center gap-2"><UserPlus className="w-4 h-4 text-teal-400" /> Append Athlete</h3>
+                    <p className="text-[9px] font-mono text-slate-400 mb-4 uppercase tracking-wider">Assign variable matrix to: <span className="text-emerald-400 font-bold">{activeTeam.name}</span></p>
                     <form onSubmit={handleAddPlayer} className="space-y-3">
-                      <input type="text" placeholder="Player Full Name" required value={playerData.name} onChange={(e) => setPlayerData({...playerData, name: e.target.value})} className="w-full bg-[#020617] border border-blue-950 rounded-xl p-3 text-xs" />
-                      <select value={playerData.playing_role} onChange={(e) => setPlayerData({...playerData, playing_role: e.target.value})} className="w-full bg-[#020617] border border-blue-950 rounded-xl p-3 text-xs text-slate-400">
+                      <input type="text" placeholder="Athlete Full Name" required value={playerData.name} onChange={(e) => setPlayerData({...playerData, name: e.target.value})} className="w-full bg-slate-950/40 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+                      <select value={playerData.playing_role} onChange={(e) => setPlayerData({...playerData, playing_role: e.target.value})} className="w-full bg-slate-950/40 border border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-400 focus:outline-none focus:border-emerald-500 cursor-pointer appearance-none">
                         <option value="Batsman">Batsman</option>
                         <option value="Bowler">Bowler</option>
                         <option value="All-Rounder">All-Rounder</option>
                         <option value="Wicketkeeper">Wicketkeeper</option>
                       </select>
-                      <button type="submit" className="w-full h-10 bg-teal-500 text-zinc-950 text-xs font-bold uppercase tracking-wider rounded-xl">Incorporate Athlete</button>
+                      <button type="submit" className="w-full h-11 bg-teal-500 text-slate-950 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-teal-400 transition-all shadow-md">Inject Athlete</button>
                     </form>
                   </motion.div>
                 ) : (
-                  <div className="p-4 border border-dashed border-blue-950/40 text-center text-[10px] font-mono text-slate-500 uppercase">Select a franchise card to manage its player rosters</div>
+                  <div className="p-5 border border-dashed border-blue-900/30 bg-slate-950/40 text-center text-[10px] font-mono text-slate-500 uppercase tracking-widest rounded-2xl backdrop-blur-sm">
+                    Select a franchise card to map roster arrays
+                  </div>
                 )}
 
-                {/* 3. Match Scheduler Panel */}
-                <div className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl">
-                  <h3 className="text-sm font-black uppercase text-slate-200 mb-4 flex items-center gap-2"><Calendar className="w-4 h-4 text-emerald-400" /> Schedule Fixture</h3>
+                {/* Fixture Schedule Component */}
+                <div className="bg-gradient-to-br from-[#0b1536]/60 to-[#070d1f]/80 border border-blue-900/30 p-6 rounded-2xl shadow-xl backdrop-blur-sm">
+                  <h3 className="text-xs font-black uppercase text-slate-200 mb-4 flex items-center gap-2"><Calendar className="w-4 h-4 text-purple-400" /> Schedule Match Node</h3>
                   <form onSubmit={handleScheduleMatch} className="space-y-3">
-                    <select required value={matchData.team_a_id} onChange={(e) => setMatchData({...matchData, team_a_id: e.target.value})} className="w-full bg-[#020617] border border-blue-950 rounded-xl p-3 text-xs text-slate-400">
-                      <option value="">Select Team A</option>
+                    <select required value={matchData.team_a_id} onChange={(e) => setMatchData({...matchData, team_a_id: e.target.value})} className="w-full bg-slate-950/40 border border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-400 focus:outline-none focus:border-emerald-500 appearance-none cursor-pointer">
+                      <option value="">Select Franchise A</option>
                       {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                     </select>
-                    <select required value={matchData.team_b_id} onChange={(e) => setMatchData({...matchData, team_b_id: e.target.value})} className="w-full bg-[#020617] border border-blue-950 rounded-xl p-3 text-xs text-slate-400">
-                      <option value="">Select Team B</option>
+                    <select required value={matchData.team_b_id} onChange={(e) => setMatchData({...matchData, team_b_id: e.target.value})} className="w-full bg-slate-950/40 border border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-400 focus:outline-none focus:border-emerald-500 appearance-none cursor-pointer">
+                      <option value="">Select Franchise B</option>
                       {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                     </select>
-                    <input type="text" placeholder="Venue Stadium Name" value={matchData.venue} onChange={(e) => setMatchData({...matchData, venue: e.target.value})} className="w-full bg-[#020617] border border-blue-950 rounded-xl p-3 text-xs" />
-                    <button type="submit" className="w-full h-10 bg-blue-600 text-white text-xs font-bold uppercase tracking-wider rounded-xl">Generate Fixture</button>
+                    <input type="text" placeholder="Stadium Venue Oval Name" value={matchData.venue} onChange={(e) => setMatchData({...matchData, venue: e.target.value})} className="w-full bg-slate-950/40 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+                    <button type="submit" className="w-full h-11 bg-purple-500 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-purple-400 transition-all shadow-md">Generate Match Frame</button>
                   </form>
                 </div>
               </div>
 
-              {/* Lists Columns Display */}
+              {/* Data Lists Operations Columns Container */}
               <div className="lg:col-span-2 space-y-6">
-                {/* Registered Franchise Teams Grid */}
-                <div className="bg-[#0a1128]/40 border border-blue-950 p-6 rounded-3xl">
-                  <h3 className="text-xs font-mono font-black uppercase tracking-widest text-slate-400 mb-4">Registered League Franchises ({teams.length})</h3>
+                <div className="bg-gradient-to-br from-[#0b1536]/80 to-[#070d1f]/95 border border-blue-900/40 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
+                  <span className="text-[10px] font-mono font-bold tracking-widest text-slate-400 uppercase block mb-4">Registered League Franchises Registry ({teams.length})</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {teams.map(team => (
-                      <div key={team.id} className={`p-4 rounded-xl border flex justify-between items-center transition-colors cursor-pointer ${activeTeam?.id === team.id ? 'bg-slate-900 border-emerald-500' : 'bg-slate-950/40 border-blue-950/60 hover:border-blue-900'}`} onClick={() => loadTeamRoster(team)}>
+                      <div 
+                        key={team.id} 
+                        className={`p-4 rounded-xl border flex justify-between items-center transition-all cursor-pointer ${activeTeam?.id === team.id ? 'bg-slate-950/80 border-emerald-500 shadow-md shadow-emerald-950/50' : 'bg-slate-950/30 border-blue-950/40 hover:bg-slate-950/60 hover:border-slate-700'}`} 
+                        onClick={() => loadTeamRoster(team)}
+                      >
                         <div>
-                          <span className="font-bold text-white uppercase text-xs">{team.name}</span>
-                          <span className="text-[10px] font-mono text-slate-500 block mt-1">Captain: {team.captain_name || "Unassigned"}</span>
+                          <span className="font-extrabold text-white uppercase text-sm tracking-tight block">{team.name}</span>
+                          <span className="text-[10px] font-mono text-slate-500 block mt-1.5 uppercase font-bold">Captain: <span className="text-slate-300 font-sans font-medium">{team.captain_name || "Unassigned"}</span></span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-600" />
+                        <ChevronRight className={`w-4 h-4 transition-transform ${activeTeam?.id === team.id ? 'text-emerald-400 translate-x-0.5' : 'text-slate-600'}`} />
                       </div>
                     ))}
                   </div>
 
-                  {/* Render roster players under targeted team context selection */}
                   {activeTeam && (
-                    <div className="mt-6 pt-4 border-t border-blue-950/60">
-                      <span className="text-[10px] font-mono font-bold uppercase text-emerald-400 tracking-wider"> Roster Allocation for {activeTeam.name}:</span>
-                      <div className="flex flex-wrap gap-2 mt-3">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 pt-5 border-t border-slate-900">
+                      <span className="text-[10px] font-mono font-bold uppercase text-emerald-400 tracking-widest block mb-3">Roster Allocation Array Matrix:</span>
+                      <div className="flex flex-wrap gap-2">
                         {players.map(p => (
-                          <span key={p.id} className="px-2.5 py-1 text-[10px] bg-slate-900 border border-blue-950/80 rounded-md font-medium text-slate-300">
-                            👤 {p.name} <span className="text-emerald-500 font-mono text-[9px]">({p.playing_role})</span>
+                          <span key={p.id} className="px-3 py-1.5 text-[10px] bg-slate-950/60 border border-slate-850 rounded-xl font-medium text-slate-300 shadow-sm flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {p.name} <span className="text-slate-500 font-mono text-[9px]">[{p.playing_role}]</span>
                           </span>
                         ))}
                       </div>
-                    </div>
+                    </motion.div>
                   )}
                 </div>
 
-                {/* Fixture Schedule Overview Container */}
-                <div className="bg-[#0a1128]/40 border border-blue-950 p-6 rounded-3xl">
-                  <h3 className="text-xs font-mono font-black uppercase tracking-widest text-slate-400 mb-4">Active League Fixtures Schedule ({matches.length})</h3>
+                {/* Fixture Registry Matrix List */}
+                <div className="bg-gradient-to-br from-[#0b1536]/80 to-[#070d1f]/95 border border-blue-900/40 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
+                  <span className="text-[10px] font-mono font-bold tracking-widest text-slate-400 uppercase block mb-4">Active League Fixtures Core Schedule ({matches.length})</span>
                   <div className="grid grid-cols-1 gap-3">
                     {matches.map(m => (
-                      <div key={m.id} className="p-4 bg-slate-950/60 border border-blue-950 rounded-xl flex justify-between items-center">
+                      <div key={m.id} className="p-4 bg-slate-950/40 border border-slate-850 rounded-2xl flex justify-between items-center group hover:border-slate-700 transition-colors">
                         <div>
-                          <span className="text-xs font-black text-white uppercase block">Match Event Instance</span>
-                          <span className="text-[10px] font-mono text-slate-500 mt-1 block">Venue: {m.venue || "Stadium Oval"}</span>
+                          <span className="text-xs font-black text-white uppercase tracking-tight block">Match Event Instance</span>
+                          <span className="text-[10px] font-mono text-slate-500 mt-1 block">Venue: <span className="text-slate-300 font-sans">{m.venue || "Stadium Oval"}</span></span>
                         </div>
-                        <button onClick={() => loadLiveScorecardConsole(m)} className="px-4 py-2 bg-emerald-500 text-zinc-950 text-xs font-black uppercase rounded-lg hover:bg-emerald-400 transition-colors">Launch Score Panel</button>
+                        <button onClick={() => loadLiveScorecardConsole(m)} className="px-4 py-2 bg-emerald-500 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl hover:bg-emerald-400 transition-all shadow-md active:scale-95">Launch Score Panel</button>
                       </div>
                     ))}
                   </div>
@@ -351,29 +404,29 @@ export default function HomeApplicationWorkspace() {
               </div>
             </motion.div>
           ) : (
-            // MAIN LEAGUE SELECTOR OVERVIEW DECK
-            <motion.div key="hub" className="max-w-7xl mx-auto w-full px-6 py-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="bg-zinc-900/20 border border-zinc-800 p-6 rounded-3xl backdrop-blur-md">
-                <h2 className="font-bold text-base text-zinc-100 mb-1 flex items-center gap-2"><Trophy className="w-5 h-5 text-emerald-400" /> Launch League Framework</h2>
-                <p className="text-[11px] text-slate-400 mb-6">Instantiate automated tournament configurations safely inside database records.</p>
+            /* LAYER 4: INITIAL MASTER HUB LEAGUE SELECTOR CONTAINER DECK */
+            <motion.div key="hub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-7xl mx-auto w-full px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8 bg-transparent">
+              <div className="bg-gradient-to-br from-[#0b1536]/80 to-[#070d1f]/95 border border-blue-900/40 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
+                <h2 className="font-black text-md text-white uppercase tracking-tight mb-1 flex items-center gap-2"><Trophy className="w-5 h-5 text-emerald-400" /> Instantiate League Frame</h2>
+                <p className="text-[11px] text-slate-400 mb-6 font-medium">Provision new multi-tenant tournament configuration maps to PostgreSQL schema records.</p>
                 <form onSubmit={handleCreateTournament} className="space-y-4">
-                  <input type="text" placeholder="Tournament Name" required value={tournamentData.name} onChange={(e) => setTournamentData({...tournamentData, name: e.target.value})} className="w-full bg-[#070709] border border-zinc-900 rounded-xl p-3 text-xs font-medium text-zinc-200" />
-                  <input type="text" placeholder="Location City" value={tournamentData.location} onChange={(e) => setTournamentData({...tournamentData, location: e.target.value})} className="w-full bg-[#070709] border border-zinc-900 rounded-xl p-3 text-xs font-medium text-zinc-200" />
-                  <button type="submit" className="w-full h-11 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black rounded-xl text-xs uppercase tracking-wider transition-all shadow-md">{loading ? 'Processing...' : 'Deploy Parameters'}</button>
+                  <input type="text" placeholder="Tournament Branding Name" required value={tournamentData.name} onChange={(e) => setTournamentData({...tournamentData, name: e.target.value})} className="w-full bg-slate-950/40 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+                  <input type="text" placeholder="Location Hosting City" value={tournamentData.location} onChange={(e) => setTournamentData({...tournamentData, location: e.target.value})} className="w-full bg-slate-950/40 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+                  <button type="submit" className="w-full h-12 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-widest transition-all shadow-lg shadow-emerald-500/10 mt-2">{loading ? 'Compiling Ingestion Map...' : 'Deploy Parameters'}</button>
                 </form>
               </div>
 
-              <div className="lg:col-span-2 space-y-4">
-                <h2 className="text-xs font-mono font-black tracking-widest text-slate-400 uppercase border-l-2 border-emerald-500 pl-2.5">Active Multi-Tenant Contexts ({tournaments.length})</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="lg:col-span-2 space-y-4 bg-transparent">
+                <h2 className="text-xs font-mono font-black tracking-widest text-slate-400 uppercase border-l-4 border-emerald-500 pl-3 mb-4">Active Multi-Tenant Context Containers ({tournaments.length})</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-transparent">
                   {tournaments.map((t: any) => (
-                    <div key={t.id} className="p-6 bg-zinc-900/20 border border-zinc-800 rounded-2xl flex flex-col justify-between group">
+                    <div key={t.id} className="p-6 bg-gradient-to-br from-[#0b1536]/40 to-[#070d1f]/70 border border-blue-900/30 rounded-2xl flex flex-col justify-between shadow-xl group hover:border-blue-800 transition-colors backdrop-blur-sm">
                       <div>
-                        <h3 className="font-black text-white text-sm uppercase mb-1">{t.name}</h3>
-                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-950 text-emerald-400 border border-blue-900/50">Active State</span>
+                        <h3 className="font-black text-white text-md uppercase tracking-tight line-clamp-1 group-hover:text-emerald-400 transition-colors">{t.name}</h3>
+                        <span className="inline-block text-[9px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded-md bg-slate-950/80 border border-emerald-500/20 text-emerald-400 mt-2">Active Streaming Mode</span>
                       </div>
-                      <button onClick={() => loadTournamentControlRoom(t)} className="mt-6 w-full py-2.5 bg-[#070709] border border-zinc-900 text-xs text-emerald-400 font-bold flex items-center justify-center gap-1.5 uppercase tracking-wider hover:text-white transition-colors">
-                        Enter Control Room <ChevronRight className="w-4 h-4 text-emerald-500" />
+                      <button onClick={() => loadTournamentControlRoom(t)} className="mt-8 w-full py-3 bg-slate-950/60 border border-slate-850 hover:border-slate-700 text-xs text-emerald-400 font-extrabold flex items-center justify-center gap-1.5 uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95">
+                        Enter Control Room <ChevronRight className="w-4 h-4 text-emerald-500 group-hover:translate-x-0.5 transition-transform" />
                       </button>
                     </div>
                   ))}
