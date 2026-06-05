@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
 
+# Many-to-Many association table for Tournaments and Teams
 tournament_teams = Table(
     'tournament_teams',
     Base.metadata,
@@ -21,6 +22,10 @@ class UserModel(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    # Added back-population to track what tournaments an organizer handles
+    tournaments = relationship("TournamentModel", back_populates="organizer", cascade="all, delete-orphan")
+
+
 class TournamentModel(Base):
     __tablename__ = "tournaments"
     id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
@@ -34,8 +39,11 @@ class TournamentModel(Base):
     status = Column(String(50), default="Upcoming")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    # Relationships
+    organizer = relationship("UserModel", back_populates="tournaments")
     teams = relationship("TeamModel", secondary=tournament_teams, back_populates="tournaments")
     matches = relationship("MatchModel", back_populates="tournament", cascade="all, delete-orphan")
+
 
 class TeamModel(Base):
     __tablename__ = "teams"
@@ -45,8 +53,10 @@ class TeamModel(Base):
     captain_name = Column(String(100), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    # Relationships
     tournaments = relationship("TournamentModel", secondary=tournament_teams, back_populates="teams")
     players = relationship("PlayerModel", back_populates="team", cascade="all, delete-orphan")
+
 
 class PlayerModel(Base):
     __tablename__ = "players"
@@ -58,7 +68,9 @@ class PlayerModel(Base):
     batting_style = Column(String(50), nullable=True)
     bowling_style = Column(String(50), nullable=True)
 
+    # Relationships
     team = relationship("TeamModel", back_populates="players")
+
 
 class MatchModel(Base):
     __tablename__ = "matches"
@@ -69,8 +81,9 @@ class MatchModel(Base):
     
     match_date = Column(DateTime(timezone=True), nullable=True)
     venue = Column(String(150), nullable=True)
-    match_status = Column(String(50), default="Scheduled")
+    match_status = Column(String(50), default="Scheduled")  # e.g., Scheduled, Live, Completed
 
+    # Live Innings Scoring Fields
     team_a_runs = Column(Integer, default=0)
     team_a_wickets = Column(Integer, default=0)
     team_a_overs = Column(Numeric(3, 1), default=0.0)
@@ -82,4 +95,8 @@ class MatchModel(Base):
     winner_id = Column(UUID(as_uuid=True), ForeignKey('teams.id'), nullable=True)
     result_description = Column(String(255), nullable=True)
 
+    # Explicit Relationships added to allow seamless data serialization for frontend queries
     tournament = relationship("TournamentModel", back_populates="matches")
+    team_a = relationship("TeamModel", foreign_keys=[team_a_id])
+    team_b = relationship("TeamModel", foreign_keys=[team_b_id])
+    winner = relationship("TeamModel", foreign_keys=[winner_id])

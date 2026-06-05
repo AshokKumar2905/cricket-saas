@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional, List
 from datetime import date
 from uuid import UUID
+from decimal import Decimal
 
 class UserCreate(BaseModel):
     name: str
@@ -85,10 +86,17 @@ class MatchResponse(BaseModel):
     team_b_id: UUID
     venue: Optional[str] = None
     match_status: str
+    
+    # Team A Score Serialization Fields
     team_a_runs: int
     team_a_wickets: int
+    team_a_overs: Decimal  # Added to safely stream decimal precision overs to the frontend
+    
+    # Team B Score Serialization Fields
     team_b_runs: int
     team_b_wickets: int
+    team_b_overs: Decimal  # Added to safely stream decimal precision overs to the frontend
+    
     winner_id: Optional[UUID] = None
     result_description: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)

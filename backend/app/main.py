@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any
 from uuid import UUID
+from decimal import Decimal
 
 from app.database import Base, engine, get_db
 from app.models import UserModel, TournamentModel, TeamModel, MatchModel, PlayerModel
@@ -18,7 +19,7 @@ try:
     Base.metadata.create_all(bind=engine)
     print("✅ Database verification complete! All tables live.")
 except Exception as database_error:
-    print(f"\n❌ INSTANCE REFLECTION FAILURE: {database_error}\n")
+    print(f"\n❌ DATABASE CONNECTION FAILURE: {database_error}\n")
 
 app = FastAPI(title="Cricket SaaS Multi-Tenant Engine")
 
@@ -31,7 +32,7 @@ app.add_middleware(
 )
 
 # ==========================================
-# SEED HIGH-FIDELITY BLOGS DATABASE
+# SEED CRICKET ARTICLES & BLOGS DATABASE
 # ==========================================
 MOCK_BLOG_DATABASE = [
     {
@@ -54,11 +55,11 @@ MOCK_BLOG_DATABASE = [
     },
     {
         "id": "3",
-        "title": "Orchestrating Multi-Tenant Isolation for Global Tournaments",
-        "summary": "Deep database dive looking at column schema constraints vs dynamic PostgreSQL namespace separation.",
-        "content": "When configuring large tournament infrastructures, sub-millisecond query execution speeds are highly dependent on clean index parameters. Sharding dataset partitions across distinct operational nodes isolates performance bottlenecks, protecting the live scoring data pathways during high-traffic match windows.",
+        "title": "Transitioning Local Tournaments From Paper to Digital Platforms",
+        "summary": "How providing real-time accessible query lookups empowers domestic cricket leagues.",
+        "content": "When configuring amateur tournament infrastructures, instant query execution speeds are highly dependent on clean database parameters. Moving away from hand-written paper scorebooks to a centralized digital schema allows anyone to instantly look up tournament standings, match statistics, or check a player's lifelong running run tally without search performance bottlenecks.",
         "image_url": "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=800",
-        "category": "Architecture",
+        "category": "Productivity",
         "read_time": "6 Min Read"
     }
 ]
@@ -95,7 +96,7 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     return {"access_token": token, "token_type": "bearer"}
 
 # ==========================================
-# TOURNAMENT CORE CRUD ENDPOINTS
+# TOURNAMENT ENDPOINTS
 # ==========================================
 
 @app.post("/api/tournaments", response_model=TournamentResponse)
@@ -124,7 +125,7 @@ def get_user_tournaments(db: Session = Depends(get_db), current_user_id: str = D
 def add_team_to_tournament(tournament_id: UUID, team_data: TeamCreate, db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
     tournament = db.query(TournamentModel).filter(TournamentModel.id == tournament_id, TournamentModel.organizer_id == UUID(current_user_id)).first()
     if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament framework not found or unauthorized.")
+        raise HTTPException(status_code=404, detail="Tournament not found or unauthorized access.")
     new_team = TeamModel(name=team_data.name, captain_name=team_data.captain_name, logo_url=team_data.logo_url)
     db.add(new_team)
     tournament.teams.append(new_team)
@@ -136,7 +137,7 @@ def add_team_to_tournament(tournament_id: UUID, team_data: TeamCreate, db: Sessi
 def get_tournament_teams(tournament_id: UUID, db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
     tournament = db.query(TournamentModel).filter(TournamentModel.id == tournament_id, TournamentModel.organizer_id == UUID(current_user_id)).first()
     if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament context not found or unauthorized.")
+        raise HTTPException(status_code=404, detail="Tournament not found or unauthorized access.")
     return tournament.teams
 
 # ==========================================
@@ -147,7 +148,7 @@ def get_tournament_teams(tournament_id: UUID, db: Session = Depends(get_db), cur
 def add_player_to_team(team_id: UUID, player_data: PlayerCreate, db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
     team = db.query(TeamModel).filter(TeamModel.id == team_id).first()
     if not team:
-        raise HTTPException(status_code=404, detail="Franchise team profile not found.")
+        raise HTTPException(status_code=404, detail="Team profile not found.")
     new_player = PlayerModel(
         team_id=team_id,
         name=player_data.name,
@@ -173,9 +174,9 @@ def get_team_players(team_id: UUID, db: Session = Depends(get_db), current_user_
 def schedule_match(tournament_id: UUID, match_data: MatchCreate, db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
     tournament = db.query(TournamentModel).filter(TournamentModel.id == tournament_id, TournamentModel.organizer_id == UUID(current_user_id)).first()
     if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament framework not found or unauthorized.")
+        raise HTTPException(status_code=404, detail="Tournament not found or unauthorized access.")
     if match_data.team_a_id == match_data.team_b_id:
-        raise HTTPException(status_code=400, detail="Team A and Team B cannot be identical.")
+        raise HTTPException(status_code=400, detail="Opposing teams cannot be identical.")
     new_match = MatchModel(
         tournament_id=tournament_id,
         team_a_id=match_data.team_a_id,
@@ -192,22 +193,33 @@ def schedule_match(tournament_id: UUID, match_data: MatchCreate, db: Session = D
 def get_tournament_matches(tournament_id: UUID, db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
     tournament = db.query(TournamentModel).filter(TournamentModel.id == tournament_id, TournamentModel.organizer_id == UUID(current_user_id)).first()
     if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament framework not found or unauthorized.")
+        raise HTTPException(status_code=404, detail="Tournament not found or unauthorized access.")
     return db.query(MatchModel).filter(MatchModel.tournament_id == tournament_id).all()
 
 @app.put("/api/matches/{match_id}/score", response_model=MatchResponse)
 def update_match_score(match_id: UUID, payload: Dict[str, Any], db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
     match_record = db.query(MatchModel).filter(MatchModel.id == match_id).first()
     if not match_record:
-        raise HTTPException(status_code=404, detail="Match frame instance not found.")
+        raise HTTPException(status_code=404, detail="Match record instance not found.")
+    
     score_data = payload.get("score_data", {})
+    
+    # Simple explicit mapping for core fields
     match_record.team_a_runs = score_data.get("runs_a", match_record.team_a_runs)
     match_record.team_a_wickets = score_data.get("wickets_a", match_record.team_a_wickets)
-    match_record.team_a_overs = score_data.get("overs_a", match_record.team_a_overs)
+    
+    # Safe Decimal casting ensures PostgreSQL Numeric() targets never undergo data type truncation errors
+    if "overs_a" in score_data:
+        match_record.team_a_overs = Decimal(str(score_data["overs_a"]))
+        
     match_record.team_b_runs = score_data.get("runs_b", match_record.team_b_runs)
     match_record.team_b_wickets = score_data.get("wickets_b", match_record.team_b_wickets)
-    match_record.team_b_overs = score_data.get("overs_b", match_record.team_b_overs)
+    
+    if "overs_b" in score_data:
+        match_record.team_b_overs = Decimal(str(score_data["overs_b"]))
+        
     match_record.match_status = payload.get("status", match_record.match_status)
+    
     db.commit()
     db.refresh(match_record)
     return match_record
