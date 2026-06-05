@@ -6,11 +6,13 @@ from uuid import UUID
 from decimal import Decimal
 
 from app.database import Base, engine, get_db
-from app.models import UserModel, TournamentModel, TeamModel, MatchModel, PlayerModel
+from app.models import UserModel, TournamentModel, TeamModel, MatchModel, PlayerModel, PlayerMatchStatModel, tournament_teams
 from app.schemas import (
     UserCreate, UserResponse, LoginRequest, Token, 
-    TournamentCreate, TournamentResponse, TeamCreate, TeamResponse,
-    PlayerCreate, PlayerResponse, MatchCreate, MatchResponse,
+    TournamentCreate, TournamentResponse, TournamentUpdate,
+    TeamCreate, TeamResponse, TeamUpdate,
+    PlayerCreate, PlayerResponse, PlayerUpdate,
+    MatchCreate, MatchResponse, MatchUpdate,
     PlayerProfileResponse, ProfileRecentMatch, ProfileBattingStats, ProfileBowlingStats
 )
 from app.auth import hash_password, verify_password, create_access_token, get_current_user_id
@@ -97,7 +99,7 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     return {"access_token": token, "token_type": "bearer"}
 
 # ==========================================
-# TOURNAMENT ENDPOINTS
+# TOURNAMENT ENDPOINTS (FULL CRUD)
 # ==========================================
 
 @app.post("/api/tournaments", response_model=TournamentResponse)
@@ -118,8 +120,30 @@ def create_tournament(tournament_data: TournamentCreate, db: Session = Depends(g
 def get_user_tournaments(db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
     return db.query(TournamentModel).filter(TournamentModel.organizer_id == UUID(current_user_id)).all()
 
+@app.put("/api/tournaments/{tournament_id}", response_model=TournamentResponse)
+def update_tournament(tournament_id: UUID, payload: TournamentUpdate, db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
+    tournament = db.query(TournamentModel).filter(TournamentModel.id == tournament_id, TournamentModel.organizer_id == UUID(current_user_id)).first()
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament framework profile not discovered or access denied.")
+    
+    tournament.name = payload.name
+    tournament.location = payload.location
+    db.commit()
+    db.refresh(tournament)
+    return tournament
+
+@app.delete("/api/tournaments/{tournament_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_tournament(tournament_id: UUID, db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
+    tournament = db.query(TournamentModel).filter(TournamentModel.id == tournament_id, TournamentModel.organizer_id == UUID(current_user_id)).first()
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament registry not found or access denied.")
+    
+    db.delete(tournament)
+    db.commit()
+    return None
+
 # ==========================================
-# TEAM ENDPOINTS
+# TEAM ENDPOINTS (FULL CRUD)
 # ==========================================
 
 @app.post("/api/tournaments/{tournament_id}/teams", response_model=TeamResponse)
@@ -141,8 +165,34 @@ def get_tournament_teams(tournament_id: UUID, db: Session = Depends(get_db), cur
         raise HTTPException(status_code=404, detail="Tournament not found or unauthorized access.")
     return tournament.teams
 
+@app.put("/api/teams/{team_id}", response_model=TeamResponse)
+def update_team(team_id: UUID, payload: TeamUpdate, db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
+    team = db.query(TeamModel).join(TournamentModel, TeamModel.tournaments).filter(
+        TeamModel.id == team_id, TournamentModel.organizer_id == UUID(current_user_id)
+    ).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team registry sheet not found or unauthorized.")
+    
+    team.name = payload.name
+    team.captain_name = payload.captain_name
+    db.commit()
+    db.refresh(team)
+    return team
+
+@app.delete("/api/teams/{team_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_team(team_id: UUID, db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
+    team = db.query(TeamModel).join(TournamentModel, TeamModel.tournaments).filter(
+        TeamModel.id == team_id, TournamentModel.organizer_id == UUID(current_user_id)
+    ).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team configuration sheet metadata missing or access denied.")
+    
+    db.delete(team)
+    db.commit()
+    return None
+
 # ==========================================
-# PLAYER ENDPOINTS
+# PLAYER ENDPOINTS (FULL CRUD)
 # ==========================================
 
 @app.post("/api/teams/{team_id}/players", response_model=PlayerResponse)
@@ -167,8 +217,35 @@ def add_player_to_team(team_id: UUID, player_data: PlayerCreate, db: Session = D
 def get_team_players(team_id: UUID, db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
     return db.query(PlayerModel).filter(PlayerModel.team_id == team_id).all()
 
+@app.put("/api/players/{player_id}", response_model=PlayerResponse)
+def update_player(player_id: UUID, payload: PlayerUpdate, db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
+    player = db.query(PlayerModel).join(TeamModel).join(TournamentModel, TeamModel.tournaments).filter(
+        PlayerModel.id == player_id, TournamentModel.organizer_id == UUID(current_user_id)
+    ).first()
+    if not player:
+        raise HTTPException(status_code=404, detail="Player record not found or access unverified.")
+    
+    player.name = payload.name
+    if payload.playing_role:
+        player.playing_role = payload.playing_role
+    db.commit()
+    db.refresh(player)
+    return player
+
+@app.delete("/api/players/{player_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_player(player_id: UUID, db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
+    player = db.query(PlayerModel).join(TeamModel).join(TournamentModel, TeamModel.tournaments).filter(
+        PlayerModel.id == player_id, TournamentModel.organizer_id == UUID(current_user_id)
+    ).first()
+    if not player:
+        raise HTTPException(status_code=404, detail="Player profile missing inside target roster database mapping.")
+    
+    db.delete(player)
+    db.commit()
+    return None
+
 # ==========================================
-# MATCH ENDPOINTS
+# MATCH ENDPOINTS (FULL CRUD)
 # ==========================================
 
 @app.post("/api/tournaments/{tournament_id}/matches", response_model=MatchResponse)
@@ -197,6 +274,31 @@ def get_tournament_matches(tournament_id: UUID, db: Session = Depends(get_db), c
         raise HTTPException(status_code=404, detail="Tournament not found or unauthorized access.")
     return db.query(MatchModel).filter(MatchModel.tournament_id == tournament_id).all()
 
+@app.put("/api/matches/{match_id}", response_model=MatchResponse)
+def update_match_details(match_id: UUID, payload: MatchUpdate, db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
+    match = db.query(MatchModel).join(TournamentModel).filter(
+        MatchModel.id == match_id, TournamentModel.organizer_id == UUID(current_user_id)
+    ).first()
+    if not match:
+        raise HTTPException(status_code=404, detail="Match profile structure missing or access unauthorized.")
+    
+    match.venue = payload.venue
+    db.commit()
+    db.refresh(match)
+    return match
+
+@app.delete("/api/matches/{match_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_match(match_id: UUID, db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
+    match = db.query(MatchModel).join(TournamentModel).filter(
+        MatchModel.id == match_id, TournamentModel.organizer_id == UUID(current_user_id)
+    ).first()
+    if not match:
+        raise HTTPException(status_code=404, detail="Match fixture setup parameters missing or unauthorized.")
+    
+    db.delete(match)
+    db.commit()
+    return None
+
 @app.put("/api/matches/{match_id}/score", response_model=MatchResponse)
 def update_match_score(match_id: UUID, payload: Dict[str, Any], db: Session = Depends(get_db), current_user_id: str = Depends(get_current_user_id)):
     match_record = db.query(MatchModel).filter(MatchModel.id == match_id).first()
@@ -205,11 +307,9 @@ def update_match_score(match_id: UUID, payload: Dict[str, Any], db: Session = De
     
     score_data = payload.get("score_data", {})
     
-    # Simple explicit mapping for core fields
     match_record.team_a_runs = score_data.get("runs_a", match_record.team_a_runs)
     match_record.team_a_wickets = score_data.get("wickets_a", match_record.team_a_wickets)
     
-    # Safe Decimal casting ensures PostgreSQL Numeric() targets never undergo data type truncation errors
     if "overs_a" in score_data:
         match_record.team_a_overs = Decimal(str(score_data["overs_a"]))
         
@@ -235,7 +335,6 @@ def get_player_profile_analytics(player_id: UUID, db: Session = Depends(get_db))
     Queries, builds, and aggregates live statistics directly from match logs
     to completely substitute manual paper scorebooks with real-time computations.
     """
-    # 1. Look up fundamental player instance metrics
     player = db.query(PlayerModel).filter(PlayerModel.id == player_id).first()
     if not player:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target player instance not found.")
@@ -246,9 +345,6 @@ def get_player_profile_analytics(player_id: UUID, db: Session = Depends(get_db))
         if team:
             team_name = team.name
 
-    # 2. Extract context mappings for the target player's entire match historical metrics
-    # (Using the cross-reference mapping link on player_match_stats scorecards table)
-    from app.models import PlayerMatchStatModel  # Assuming this maps to your scorecard table name
     scorecards = db.query(PlayerMatchStatModel).filter(PlayerMatchStatModel.player_id == player_id).all()
 
     # Batting tracking accumulators
@@ -271,9 +367,7 @@ def get_player_profile_analytics(player_id: UUID, db: Session = Depends(get_db))
 
     recent_matches_list = []
 
-    # 3. Iterate through data rows to parse aggregate performance metrics
     for card in scorecards:
-        # Batting evaluation metrics
         if card.balls_faced > 0 or card.runs_scored > 0:
             batting_innings += 1
             total_runs += card.runs_scored
@@ -287,14 +381,12 @@ def get_player_profile_analytics(player_id: UUID, db: Session = Depends(get_db))
             elif card.runs_scored >= 100:
                 hundreds += 1
 
-        # Bowling evaluation metrics
         if card.overs_bowled > 0 or card.wickets_taken > 0:
             bowling_innings += 1
             total_wickets += card.wickets_taken
             total_runs_conceded += card.runs_conceded
             total_overs_bowled += card.overs_bowled
 
-            # Update best bowling figures profile tracking logic
             if card.wickets_taken > best_wickets:
                 best_wickets = card.wickets_taken
                 best_runs = card.runs_conceded
@@ -303,10 +395,8 @@ def get_player_profile_analytics(player_id: UUID, db: Session = Depends(get_db))
                 best_runs = card.runs_conceded
                 best_bowling_str = f"{card.wickets_taken}/{card.runs_conceded}"
 
-        # 4. Pull related match timeline details 
         match_meta = db.query(MatchModel).filter(MatchModel.id == card.match_id).first()
         if match_meta:
-            # Figure out who the opposing team is
             opponent_id = match_meta.team_b_id if match_meta.team_a_id == player.team_id else match_meta.team_a_id
             opponent_team = db.query(TeamModel).filter(TeamModel.id == opponent_id).first()
             opponent_name = opponent_team.name if opponent_team else "Unknown Opponent"
@@ -326,7 +416,6 @@ def get_player_profile_analytics(player_id: UUID, db: Session = Depends(get_db))
                 )
             )
 
-    # 5. Prevent runtime system division-by-zero math calculation crashes
     batting_avg = round(float(total_runs) / batting_innings, 2) if batting_innings > 0 else 0.0
     strike_rate = round((float(total_runs) / balls_faced) * 100, 2) if balls_faced > 0 else 0.0
     bowling_avg = round(float(total_runs_conceded) / total_wickets, 2) if total_wickets > 0 else 0.0
@@ -357,5 +446,5 @@ def get_player_profile_analytics(player_id: UUID, db: Session = Depends(get_db))
             average=bowling_avg,
             best_bowling=best_bowling_str
         ),
-        recent_matches=recent_matches_list[:5] # Returns up to five most recent match elements
+        recent_matches=recent_matches_list[:5]
     )

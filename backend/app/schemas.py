@@ -1,10 +1,12 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional, List
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 from decimal import Decimal
 
-# --- USER SCHEMAS ---
+# ==========================================
+# 👥 USER ACCOUNT AUTH SCHEMAS
+# ==========================================
 
 class UserCreate(BaseModel):
     name: str
@@ -28,7 +30,9 @@ class Token(BaseModel):
     token_type: str
 
 
-# --- TOURNAMENT SCHEMAS ---
+# ==========================================
+# 🏆 TOURNAMENTS OPERATIONS SCHEMAS
+# ==========================================
 
 class TournamentCreate(BaseModel):
     name: str
@@ -37,6 +41,11 @@ class TournamentCreate(BaseModel):
     end_date: Optional[date] = None
     overs_per_match: int = 20
     ball_type: str = "Leather"
+
+# NEW: Update Payload Verification Framework Schema
+class TournamentUpdate(BaseModel):
+    name: str
+    location: Optional[str] = None
 
 class TournamentResponse(BaseModel):
     id: UUID
@@ -50,12 +59,19 @@ class TournamentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# --- TEAM SCHEMAS ---
+# ==========================================
+# 👥 TEAM BRACKET SCHEMAS
+# ==========================================
 
 class TeamCreate(BaseModel):
     name: str
     captain_name: Optional[str] = None
     logo_url: Optional[str] = None
+
+# NEW: Update Payload Verification Framework Schema
+class TeamUpdate(BaseModel):
+    name: str
+    captain_name: Optional[str] = None
 
 class TeamResponse(BaseModel):
     id: UUID
@@ -65,7 +81,9 @@ class TeamResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# --- PLAYER SCHEMAS ---
+# ==========================================
+# 🏃 PLAYER CARD ROSTER SCHEMAS
+# ==========================================
 
 class PlayerCreate(BaseModel):
     name: str
@@ -73,6 +91,11 @@ class PlayerCreate(BaseModel):
     playing_role: Optional[str] = "Batsman"
     batting_style: Optional[str] = "Right-hand Bat"
     bowling_style: Optional[str] = "None"
+
+# NEW: Update Payload Verification Framework Schema
+class PlayerUpdate(BaseModel):
+    name: str
+    playing_role: Optional[str] = "Batsman"
 
 class PlayerResponse(BaseModel):
     id: UUID
@@ -85,13 +108,19 @@ class PlayerResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# --- MATCH SCHEMAS ---
+# ==========================================
+# 📅 FIXTURE MATCH CENTERS SCHEMAS
+# ==========================================
 
 class MatchCreate(BaseModel):
     team_a_id: UUID
     team_b_id: UUID
     venue: Optional[str] = None
     match_status: Optional[str] = "Scheduled"
+
+# NEW: Update Payload Verification Framework Schema
+class MatchUpdate(BaseModel):
+    venue: Optional[str] = None
 
 class MatchResponse(BaseModel):
     id: UUID
@@ -104,19 +133,21 @@ class MatchResponse(BaseModel):
     # Team A Score Serialization Fields
     team_a_runs: int
     team_a_wickets: int
-    team_a_overs: Decimal  # Safely stream decimal precision overs to frontend
+    team_a_overs: Decimal  # Maps accurately to the Numeric database definition
     
     # Team B Score Serialization Fields
     team_b_runs: int
     team_b_wickets: int
-    team_b_overs: Decimal  # Safely stream decimal precision overs to frontend
+    team_b_overs: Decimal  # Maps accurately to the Numeric database definition
     
     winner_id: Optional[UUID] = None
     result_description: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
 
-# --- DYNAMIC PLAYER PROFILE & MATCH LOG SCHEMAS ---
+# ==========================================
+# 📊 DYNAMIC ANALYTICS PROFILE SCHEMAS
+# ==========================================
 
 class ProfileRecentMatch(BaseModel):
     match_id: UUID
@@ -129,7 +160,6 @@ class ProfileRecentMatch(BaseModel):
     overs_bowled: Decimal
     match_status: str
     result_description: Optional[str] = None
-
     model_config = ConfigDict(from_attributes=True)
 
 class ProfileBattingStats(BaseModel):
@@ -160,5 +190,4 @@ class PlayerProfileResponse(BaseModel):
     batting: ProfileBattingStats
     bowling: ProfileBowlingStats
     recent_matches: List[ProfileRecentMatch]
-
     model_config = ConfigDict(from_attributes=True)

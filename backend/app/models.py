@@ -71,7 +71,6 @@ class PlayerModel(Base):
 
     # Relationships
     team = relationship("TeamModel", back_populates="players")
-    # Added reciprocal tracking relationship hook to feed the profile data engine
     stats = relationship("PlayerMatchStatModel", back_populates="player", cascade="all, delete-orphan")
 
 
@@ -84,7 +83,7 @@ class MatchModel(Base):
     
     match_date = Column(DateTime(timezone=True), nullable=True)
     venue = Column(String(150), nullable=True)
-    match_status = Column(String(50), default="Scheduled")  # e.g., Scheduled, Live, Completed
+    match_status = Column(String(50), default="Scheduled")
 
     # Live Innings Scoring Fields
     team_a_runs = Column(Integer, default=0)
@@ -103,15 +102,10 @@ class MatchModel(Base):
     team_a = relationship("TeamModel", foreign_keys=[team_a_id])
     team_b = relationship("TeamModel", foreign_keys=[team_b_id])
     winner = relationship("TeamModel", foreign_keys=[winner_id])
-    # Added relationship mapping to track scorecards attached to individual matches
     player_stats = relationship("PlayerMatchStatModel", back_populates="match", cascade="all, delete-orphan")
 
 
 class PlayerMatchStatModel(Base):
-    """
-    SaaS Scorecard Metric Model: Maps what a player achieved in an individual local match.
-    Directly replaces handwritten local scorecard entries with clean digital structures.
-    """
     __tablename__ = "player_match_stats"
 
     id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
@@ -127,6 +121,6 @@ class PlayerMatchStatModel(Base):
     runs_conceded = Column(Integer, default=0, nullable=False)
     wickets_taken = Column(Integer, default=0, nullable=False)
 
-    # Navigation mapping properties
+    # Navigation properties
     player = relationship("PlayerModel", back_populates="stats")
     match = relationship("MatchModel", back_populates="player_stats")
