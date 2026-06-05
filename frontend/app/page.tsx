@@ -2,6 +2,7 @@
 
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import { 
   Trophy, Calendar, LogOut, ChevronRight, Mail, Lock, Users, 
   ArrowLeft, Radio, UserPlus, Phone, Activity, MapPin, Plus
@@ -472,9 +473,16 @@ export default function HomeApplicationWorkspace() {
                           <span className="text-xs text-slate-500 font-medium">No players registered in this squad yet.</span>
                         ) : (
                           players.map(p => (
-                            <span key={p.id} className="px-3 py-1.5 text-[10px] bg-slate-950/60 border border-slate-850 rounded-xl font-medium text-slate-300 shadow-sm flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {p.name} <span className="text-slate-500 font-mono text-[9px]">[{p.playing_role}]</span>
-                            </span>
+                            /* THE CRITICAL CONNECTION HOOK: Wrapping player item inside Next.js Link router */
+                            <Link
+                              href={`/players/${p.id}`}
+                              key={p.id}
+                              className="px-3 py-1.5 text-[10px] bg-slate-950/60 border border-slate-850 hover:border-emerald-500/50 rounded-xl font-bold text-slate-300 hover:text-emerald-400 shadow-sm flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer group"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 group-hover:animate-ping" />
+                              <span>{p.name}</span>
+                              <span className="text-slate-500 font-mono text-[9px] group-hover:text-emerald-500/70">[{p.playing_role}]</span>
+                            </Link>
                           ))
                         )}
                       </div>

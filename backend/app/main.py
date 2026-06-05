@@ -10,7 +10,8 @@ from app.models import UserModel, TournamentModel, TeamModel, MatchModel, Player
 from app.schemas import (
     UserCreate, UserResponse, LoginRequest, Token, 
     TournamentCreate, TournamentResponse, TeamCreate, TeamResponse,
-    PlayerCreate, PlayerResponse, MatchCreate, MatchResponse
+    PlayerCreate, PlayerResponse, MatchCreate, MatchResponse,
+    PlayerProfileResponse, ProfileRecentMatch, ProfileBattingStats, ProfileBowlingStats
 )
 from app.auth import hash_password, verify_password, create_access_token, get_current_user_id
 
@@ -223,3 +224,138 @@ def update_match_score(match_id: UUID, payload: Dict[str, Any], db: Session = De
     db.commit()
     db.refresh(match_record)
     return match_record
+
+# ==========================================
+# PLAYER PERFORMANCE PROFILE LOOKUP ENGINE
+# ==========================================
+
+@app.get("/api/players/{player_id}/profile", response_model=PlayerProfileResponse)
+def get_player_profile_analytics(player_id: UUID, db: Session = Depends(get_db)):
+    """
+    Queries, builds, and aggregates live statistics directly from match logs
+    to completely substitute manual paper scorebooks with real-time computations.
+    """
+    # 1. Look up fundamental player instance metrics
+    player = db.query(PlayerModel).filter(PlayerModel.id == player_id).first()
+    if not player:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target player instance not found.")
+    
+    team_name = "Independent / Free Agent"
+    if player.team_id:
+        team = db.query(TeamModel).filter(TeamModel.id == player.team_id).first()
+        if team:
+            team_name = team.name
+
+    # 2. Extract context mappings for the target player's entire match historical metrics
+    # (Using the cross-reference mapping link on player_match_stats scorecards table)
+    from app.models import PlayerMatchStatModel  # Assuming this maps to your scorecard table name
+    scorecards = db.query(PlayerMatchStatModel).filter(PlayerMatchStatModel.player_id == player_id).all()
+
+    # Batting tracking accumulators
+    matches_count = len(scorecards)
+    batting_innings = 0
+    total_runs = 0
+    highest_score = 0
+    balls_faced = 0
+    fifties = 0
+    hundreds = 0
+
+    # Bowling tracking accumulators
+    bowling_innings = 0
+    total_wickets = 0
+    total_runs_conceded = 0
+    total_overs_bowled = Decimal("0.0")
+    best_wickets = -1
+    best_runs = 999
+    best_bowling_str = "0/0"
+
+    recent_matches_list = []
+
+    # 3. Iterate through data rows to parse aggregate performance metrics
+    for card in scorecards:
+        # Batting evaluation metrics
+        if card.balls_faced > 0 or card.runs_scored > 0:
+            batting_innings += 1
+            total_runs += card.runs_scored
+            balls_faced += card.balls_faced
+            
+            if card.runs_scored > highest_score:
+                highest_score = card.runs_scored
+            
+            if 50 <= card.runs_scored < 100:
+                fifties += 1
+            elif card.runs_scored >= 100:
+                hundreds += 1
+
+        # Bowling evaluation metrics
+        if card.overs_bowled > 0 or card.wickets_taken > 0:
+            bowling_innings += 1
+            total_wickets += card.wickets_taken
+            total_runs_conceded += card.runs_conceded
+            total_overs_bowled += card.overs_bowled
+
+            # Update best bowling figures profile tracking logic
+            if card.wickets_taken > best_wickets:
+                best_wickets = card.wickets_taken
+                best_runs = card.runs_conceded
+                best_bowling_str = f"{card.wickets_taken}/{card.runs_conceded}"
+            elif card.wickets_taken == best_wickets and card.runs_conceded < best_runs:
+                best_runs = card.runs_conceded
+                best_bowling_str = f"{card.wickets_taken}/{card.runs_conceded}"
+
+        # 4. Pull related match timeline details 
+        match_meta = db.query(MatchModel).filter(MatchModel.id == card.match_id).first()
+        if match_meta:
+            # Figure out who the opposing team is
+            opponent_id = match_meta.team_b_id if match_meta.team_a_id == player.team_id else match_meta.team_a_id
+            opponent_team = db.query(TeamModel).filter(TeamModel.id == opponent_id).first()
+            opponent_name = opponent_team.name if opponent_team else "Unknown Opponent"
+
+            recent_matches_list.append(
+                ProfileRecentMatch(
+                    match_id=match_meta.id,
+                    opponent_name=opponent_name,
+                    venue=match_meta.venue,
+                    runs_scored=card.runs_scored,
+                    balls_faced=card.balls_faced,
+                    wickets_taken=card.wickets_taken,
+                    runs_conceded=card.runs_conceded,
+                    overs_bowled=card.overs_bowled,
+                    match_status=match_meta.match_status,
+                    result_description=match_meta.result_description
+                )
+            )
+
+    # 5. Prevent runtime system division-by-zero math calculation crashes
+    batting_avg = round(float(total_runs) / batting_innings, 2) if batting_innings > 0 else 0.0
+    strike_rate = round((float(total_runs) / balls_faced) * 100, 2) if balls_faced > 0 else 0.0
+    bowling_avg = round(float(total_runs_conceded) / total_wickets, 2) if total_wickets > 0 else 0.0
+    economy = round(float(total_runs_conceded) / float(total_overs_bowled), 2) if total_overs_bowled > 0 else 0.0
+
+    return PlayerProfileResponse(
+        id=player.id,
+        team_id=player.team_id,
+        team_name=team_name,
+        name=player.name,
+        playing_role=player.playing_role,
+        batting_style=player.batting_style,
+        bowling_style=player.bowling_style,
+        batting=ProfileBattingStats(
+            matches=matches_count,
+            innings=batting_innings,
+            total_runs=total_runs,
+            highest_score=highest_score,
+            average=batting_avg,
+            strike_rate=strike_rate,
+            fifties=fifties,
+            hundreds=hundreds
+        ),
+        bowling=ProfileBowlingStats(
+            innings=bowling_innings,
+            total_wickets=total_wickets,
+            economy=economy,
+            average=bowling_avg,
+            best_bowling=best_bowling_str
+        ),
+        recent_matches=recent_matches_list[:5] # Returns up to five most recent match elements
+    )

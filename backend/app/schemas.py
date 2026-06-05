@@ -4,6 +4,8 @@ from datetime import date
 from uuid import UUID
 from decimal import Decimal
 
+# --- USER SCHEMAS ---
+
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
@@ -25,6 +27,9 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+
+# --- TOURNAMENT SCHEMAS ---
+
 class TournamentCreate(BaseModel):
     name: str
     location: Optional[str] = None
@@ -44,6 +49,9 @@ class TournamentResponse(BaseModel):
     status: str
     model_config = ConfigDict(from_attributes=True)
 
+
+# --- TEAM SCHEMAS ---
+
 class TeamCreate(BaseModel):
     name: str
     captain_name: Optional[str] = None
@@ -55,6 +63,9 @@ class TeamResponse(BaseModel):
     captain_name: Optional[str] = None
     logo_url: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
+
+
+# --- PLAYER SCHEMAS ---
 
 class PlayerCreate(BaseModel):
     name: str
@@ -73,6 +84,9 @@ class PlayerResponse(BaseModel):
     bowling_style: Optional[str]
     model_config = ConfigDict(from_attributes=True)
 
+
+# --- MATCH SCHEMAS ---
+
 class MatchCreate(BaseModel):
     team_a_id: UUID
     team_b_id: UUID
@@ -90,13 +104,61 @@ class MatchResponse(BaseModel):
     # Team A Score Serialization Fields
     team_a_runs: int
     team_a_wickets: int
-    team_a_overs: Decimal  # Added to safely stream decimal precision overs to the frontend
+    team_a_overs: Decimal  # Safely stream decimal precision overs to frontend
     
     # Team B Score Serialization Fields
     team_b_runs: int
     team_b_wickets: int
-    team_b_overs: Decimal  # Added to safely stream decimal precision overs to the frontend
+    team_b_overs: Decimal  # Safely stream decimal precision overs to frontend
     
     winner_id: Optional[UUID] = None
     result_description: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+# --- DYNAMIC PLAYER PROFILE & MATCH LOG SCHEMAS ---
+
+class ProfileRecentMatch(BaseModel):
+    match_id: UUID
+    opponent_name: str
+    venue: Optional[str] = None
+    runs_scored: int
+    balls_faced: int
+    wickets_taken: int
+    runs_conceded: int
+    overs_bowled: Decimal
+    match_status: str
+    result_description: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ProfileBattingStats(BaseModel):
+    matches: int
+    innings: int
+    total_runs: int
+    highest_score: int
+    average: float
+    strike_rate: float
+    fifties: int
+    hundreds: int
+
+class ProfileBowlingStats(BaseModel):
+    innings: int
+    total_wickets: int
+    economy: float
+    average: float
+    best_bowling: str  # e.g., "3/15"
+
+class PlayerProfileResponse(BaseModel):
+    id: UUID
+    team_id: Optional[UUID] = None
+    team_name: str
+    name: str
+    playing_role: Optional[str]
+    batting_style: Optional[str]
+    bowling_style: Optional[str]
+    batting: ProfileBattingStats
+    bowling: ProfileBowlingStats
+    recent_matches: List[ProfileRecentMatch]
+
     model_config = ConfigDict(from_attributes=True)

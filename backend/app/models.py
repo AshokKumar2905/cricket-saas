@@ -12,6 +12,7 @@ tournament_teams = Table(
     Column('team_id', UUID(as_uuid=True), ForeignKey('teams.id', ondelete='CASCADE'), primary_key=True)
 )
 
+
 class UserModel(Base):
     __tablename__ = "users"
     id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
@@ -22,7 +23,7 @@ class UserModel(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # Added back-population to track what tournaments an organizer handles
+    # Relationships
     tournaments = relationship("TournamentModel", back_populates="organizer", cascade="all, delete-orphan")
 
 
@@ -70,6 +71,8 @@ class PlayerModel(Base):
 
     # Relationships
     team = relationship("TeamModel", back_populates="players")
+    # Added reciprocal tracking relationship hook to feed the profile data engine
+    stats = relationship("PlayerMatchStatModel", back_populates="player", cascade="all, delete-orphan")
 
 
 class MatchModel(Base):
@@ -95,8 +98,35 @@ class MatchModel(Base):
     winner_id = Column(UUID(as_uuid=True), ForeignKey('teams.id'), nullable=True)
     result_description = Column(String(255), nullable=True)
 
-    # Explicit Relationships added to allow seamless data serialization for frontend queries
+    # Relationships
     tournament = relationship("TournamentModel", back_populates="matches")
     team_a = relationship("TeamModel", foreign_keys=[team_a_id])
     team_b = relationship("TeamModel", foreign_keys=[team_b_id])
     winner = relationship("TeamModel", foreign_keys=[winner_id])
+    # Added relationship mapping to track scorecards attached to individual matches
+    player_stats = relationship("PlayerMatchStatModel", back_populates="match", cascade="all, delete-orphan")
+
+
+class PlayerMatchStatModel(Base):
+    """
+    SaaS Scorecard Metric Model: Maps what a player achieved in an individual local match.
+    Directly replaces handwritten local scorecard entries with clean digital structures.
+    """
+    __tablename__ = "player_match_stats"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    match_id = Column(UUID(as_uuid=True), ForeignKey("matches.id", ondelete="CASCADE"), nullable=False)
+    player_id = Column(UUID(as_uuid=True), ForeignKey("players.id", ondelete="CASCADE"), nullable=False)
+    
+    # Batting details
+    runs_scored = Column(Integer, default=0, nullable=False)
+    balls_faced = Column(Integer, default=0, nullable=False)
+    
+    # Bowling details
+    overs_bowled = Column(Numeric(3, 1), default=0.0, nullable=False)
+    runs_conceded = Column(Integer, default=0, nullable=False)
+    wickets_taken = Column(Integer, default=0, nullable=False)
+
+    # Navigation mapping properties
+    player = relationship("PlayerModel", back_populates="stats")
+    match = relationship("MatchModel", back_populates="player_stats")
