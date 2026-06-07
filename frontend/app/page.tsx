@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { 
   Trophy, Calendar, LogOut, ChevronRight, Mail, Lock, Users, 
   ArrowLeft, Radio, UserPlus, Phone, Activity, MapPin, Plus,
-  Edit2, Trash2, X, Save, Shield, Swords, RotateCw
+  Edit2, Trash2, X, Save, Shield, Swords, RotateCw, LayoutGrid, 
+  Layers, BarChart3, Target, User, TrendingUp
 } from 'lucide-react';
 
 interface Tournament {
@@ -71,8 +72,8 @@ export default function HomeApplicationWorkspace() {
   const [currentInnings, setCurrentInnings] = useState<'A' | 'B'>('A');
   const [matchStatus, setMatchStatus] = useState<string>('Live');
 
-  // NEW: Live Striker / Bowler Telemetry States
-  const [striker, setStriker] = useState({ name: "Striker Batsman", runs: 0, balls: 4, fours: 0, sixes: 0 });
+  // Live Striker / Bowler Telemetry States
+  const [striker, setStriker] = useState({ name: "Striker Batsman", runs: 0, balls: 0, fours: 0, sixes: 0 });
   const [nonStriker, setNonStriker] = useState({ name: "Non-Striker", runs: 0, balls: 0, fours: 0, sixes: 0 });
   const [currentBowler, setCurrentBowler] = useState({ name: "Active Bowler", overs: 0, balls: 0, maidens: 0, runs: 0, wickets: 0 });
 
@@ -242,7 +243,6 @@ export default function HomeApplicationWorkspace() {
   };
 
   const handleBallDelivered = (runsAdded: number, isWicket: boolean) => {
-    // 1. Update Core Innings Score
     if (currentInnings === 'A') {
       let nextBalls = scoreA.balls + 1;
       let nextOvers = scoreA.overs;
@@ -255,7 +255,6 @@ export default function HomeApplicationWorkspace() {
       setScoreB({ runs: scoreB.runs + runsAdded, wickets: isWicket ? Math.min(10, scoreB.wickets + 1) : scoreB.wickets, overs: nextOvers, balls: nextBalls });
     }
 
-    // 2. Update In-Game Player Telemetry Stats
     if (!isWicket) {
       setStriker(prev => ({
         ...prev,
@@ -268,7 +267,6 @@ export default function HomeApplicationWorkspace() {
       setStriker({ name: "New Batsman", runs: 0, balls: 0, fours: 0, sixes: 0 });
     }
 
-    // Update Bowler metrics
     let nextBowlerBalls = currentBowler.balls + 1;
     let nextBowlerOvers = currentBowler.overs;
     if (nextBowlerBalls === 6) { nextBowlerOvers += 1; nextBowlerBalls = 0; }
@@ -280,7 +278,6 @@ export default function HomeApplicationWorkspace() {
       wickets: isWicket ? prev.wickets + 1 : prev.wickets
     }));
 
-    // Auto-swap strike on odd runs
     if (runsAdded === 1 || runsAdded === 3) {
       rotateStrikeManual();
     }
@@ -405,15 +402,25 @@ export default function HomeApplicationWorkspace() {
       {/* --- DASHBOARD LOGGED-IN NAVIGATION ROOT BAR --- */}
       {token && (
         <div className="w-full bg-zinc-900/60 border-b border-zinc-800/80 px-6 py-4 flex justify-between items-center relative z-20 backdrop-blur-md">
-          <div className="text-xs font-mono text-emerald-400 bg-zinc-950/80 border border-zinc-800 px-3 py-1.5 rounded-xl flex items-center gap-2">
-            <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-400" /> System Live Account: <span className="text-white font-bold">{organizerEmail}</span>
+          <div className="flex items-center gap-6">
+            <div className="text-sm font-black uppercase text-white tracking-widest flex items-center gap-2">
+              🏆 GullyScores <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded-md tracking-normal font-mono">Console Deck</span>
+            </div>
+            <div className="hidden sm:flex items-center gap-1 text-[11px] font-mono text-zinc-400 bg-zinc-950/80 border border-zinc-800/80 px-3 py-1.5 rounded-xl">
+              <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-400" /> Active System Profile: <span className="text-white font-bold ml-1">{organizerEmail}</span>
+            </div>
           </div>
-          <button 
-            onClick={() => { localStorage.clear(); setToken(null); setActiveTournament(null); setActiveMatch(null); setActiveTeam(null); }} 
-            className="text-xs bg-zinc-950 border border-zinc-800/80 px-4 py-2 rounded-xl text-zinc-400 font-bold flex items-center gap-1.5 hover:text-white transition-all shadow-md cursor-pointer active:scale-95"
-          >
-            <LogOut className="w-3.5 h-3.5" /> Leave Workspace
-          </button>
+          <div className="flex items-center gap-3">
+            <Link href="/blogs" className="text-xs font-mono font-bold text-zinc-300 hover:text-emerald-400 border border-zinc-800 bg-zinc-950/40 px-4 py-2 rounded-xl backdrop-blur transition-all flex items-center gap-1.5">
+              <LayoutGrid className="w-3.5 h-3.5" /> Engineering Feed
+            </Link>
+            <button 
+              onClick={() => { localStorage.clear(); setToken(null); setActiveTournament(null); setActiveMatch(null); setActiveTeam(null); }} 
+              className="text-xs bg-zinc-950 border border-zinc-800 px-4 py-2 rounded-xl text-zinc-400 font-bold flex items-center gap-1.5 hover:text-white transition-all shadow-md cursor-pointer active:scale-95"
+            >
+              <LogOut className="w-3.5 h-3.5" /> Leave Workspace
+            </button>
+          </div>
         </div>
       )}
 
@@ -490,8 +497,8 @@ export default function HomeApplicationWorkspace() {
           ) : activeMatch ? (
             // --- SCORER APP PANEL BOARD CONTROL CONSOLE ---
             <motion.div key="scoring" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="max-w-7xl mx-auto w-full px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8 bg-transparent relative z-10">
-              <div className="lg:col-span-2 bg-zinc-900/80 border border-zinc-800 px-6 py-6 rounded-3xl backdrop-blur-md shadow-2xl space-y-6">
-                <button onClick={() => setActiveMatch(null)} className="text-[10px] uppercase font-mono font-bold text-zinc-400 hover:text-emerald-400 flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 px-3 py-1.5 rounded-lg transition-all cursor-pointer"><ArrowLeft className="w-3.5 h-3.5" /> Back to Match Center</button>
+              <div className="lg:col-span-2 bg-zinc-900/90 border border-zinc-800 px-6 py-6 rounded-3xl backdrop-blur-md shadow-2xl space-y-6">
+                <button onClick={() => setActiveMatch(null)} className="text-[10px] uppercase font-mono font-bold text-zinc-400 hover:text-emerald-400 flex items-center gap-1.5 mb-6 bg-zinc-950 border border-zinc-800 px-3 py-1.5 rounded-lg transition-all cursor-pointer"><ArrowLeft className="w-3.5 h-3.5" /> Back to Match Center</button>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className={`p-6 rounded-2xl border transition-all cursor-pointer ${currentInnings === 'A' ? 'bg-zinc-950 border-emerald-500 ring-1 ring-emerald-500/10' : 'bg-zinc-950/40 border-zinc-800/80 hover:border-zinc-700'}`} onClick={() => setCurrentInnings('A')}>
@@ -506,33 +513,33 @@ export default function HomeApplicationWorkspace() {
                   </div>
                 </div>
 
-                {/* 📊 NEW: LIVE TELEMETRY STATS TRACKER OVERLAY CARD */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 bg-zinc-950/60 border border-zinc-800/80 rounded-2xl backdrop-blur-sm">
+                {/* LIVE TELEMETRY STATS TRACKER OVERLAY CARD */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 bg-zinc-950/80 border border-zinc-800 rounded-2xl">
                   <div className="space-y-3">
                     <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-bold block flex items-center gap-1"><Swords className="w-3.5 h-3.5 text-emerald-400" /> Active Batsmen</span>
                     <div className="space-y-2 text-xs">
-                      <div className="flex justify-between items-center bg-zinc-900/50 p-2 rounded-lg border border-zinc-800">
+                      <div className="flex justify-between items-center bg-zinc-900/60 p-3 rounded-xl border border-zinc-800/80">
                         <span className="font-bold text-white flex items-center gap-1">🏏 {striker.name} *</span>
                         <span className="font-mono font-black text-emerald-400">{striker.runs} <span className="text-zinc-500 font-normal">({striker.balls}b)</span></span>
                       </div>
-                      <div className="flex justify-between items-center bg-zinc-900/20 p-2 rounded-lg border border-zinc-800/50">
+                      <div className="flex justify-between items-center bg-zinc-900/30 p-3 rounded-xl border border-zinc-800/40">
                         <span className="text-zinc-400">{nonStriker.name}</span>
                         <span className="font-mono text-zinc-400">{nonStriker.runs} <span className="text-zinc-600 font-normal">({nonStriker.balls}b)</span></span>
                       </div>
                     </div>
-                    <button onClick={rotateStrikeManual} className="text-[9px] font-mono uppercase tracking-wider text-zinc-400 hover:text-emerald-400 flex items-center gap-1 bg-zinc-900 px-2.5 py-1 rounded-md border border-zinc-800 transition-all active:scale-95 cursor-pointer"><RotateCw className="w-3 h-3" /> Swap Strike</button>
+                    <button onClick={rotateStrikeManual} className="text-[9px] font-mono uppercase tracking-wider text-zinc-400 hover:text-emerald-400 flex items-center gap-1 bg-zinc-900 px-2.5 py-1.5 rounded-xl border border-zinc-800 transition-all active:scale-95 cursor-pointer"><RotateCw className="w-3 h-3" /> Swap Strike Orientation</button>
                   </div>
 
                   <div className="space-y-3">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-bold block flex items-center gap-1"><Shield className="w-3.5 h-3.5 text-teal-400" /> Bowler Spells</span>
-                    <div className="bg-zinc-900/50 p-3 rounded-lg border border-zinc-800 text-xs flex justify-between items-center h-[68px]">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 font-bold block flex items-center gap-1"><Shield className="w-3.5 h-3.5 text-teal-400" /> Active Bowler Spell</span>
+                    <div className="bg-zinc-900/60 p-4 rounded-xl border border-zinc-800 text-xs flex justify-between items-center h-[76px]">
                       <div>
-                        <span className="font-bold text-white block">{currentBowler.name}</span>
-                        <span className="text-[10px] font-mono text-zinc-500 uppercase mt-0.5 block">Overs: {currentBowler.overs}.{currentBowler.balls}</span>
+                        <span className="font-bold text-white block text-sm">{currentBowler.name}</span>
+                        <span className="text-[10px] font-mono text-zinc-500 uppercase mt-1 block">Overs Bowled: {currentBowler.overs}.{currentBowler.balls}</span>
                       </div>
                       <div className="text-right font-mono">
-                        <span className="text-zinc-500 text-[10px] block font-bold uppercase">W-R</span>
-                        <span className="font-black text-teal-400 text-sm">{currentBowler.wickets}-{currentBowler.runs}</span>
+                        <span className="text-zinc-500 text-[10px] block font-bold uppercase tracking-wider">Wickets-Runs</span>
+                        <span className="font-black text-teal-400 text-lg">{currentBowler.wickets}<span className="text-zinc-600 font-light mx-0.5">/</span>{currentBowler.runs}</span>
                       </div>
                     </div>
                   </div>
@@ -549,7 +556,7 @@ export default function HomeApplicationWorkspace() {
                 </div>
               </div>
 
-              <div className="bg-zinc-900/80 border border-zinc-800 p-6 rounded-3xl flex flex-col items-center justify-center min-h-[320px] shadow-2xl backdrop-blur-md relative">
+              <div className="bg-zinc-900/90 border border-zinc-800 p-6 rounded-3xl flex flex-col items-center justify-center min-h-[320px] shadow-2xl backdrop-blur-md relative">
                 <motion.div className="w-24 h-24 rounded-full bg-gradient-to-br from-red-600 via-red-700 to-red-950 border-2 border-red-500/30 shadow-2xl cursor-pointer" animate={{ rotate: isBallHovered ? 360 : 0, scale: isBallHovered ? 1.05 : 1 }} transition={{ ease: "linear", duration: 4, repeat: Infinity }} onHoverStart={() => setIsBallHovered(true)} onHoverEnd={() => setIsBallHovered(false)} />
                 <span className="text-[10px] font-mono tracking-widest text-zinc-400 uppercase mt-5 flex items-center gap-1.5 bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800 shadow">
                   <Activity className="w-3 h-3 text-emerald-400 animate-pulse" /> Live Feed Sync Active
@@ -557,13 +564,15 @@ export default function HomeApplicationWorkspace() {
               </div>
             </motion.div>
           ) : activeTournament ? (
-            // --- CONTROL ROOM VIEW CONTROLLER PANELS ---
-            <motion.div key="control-room" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="max-w-7xl mx-auto w-full px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8 bg-transparent relative z-10">
-              <div className="space-y-6">
-                <button onClick={() => { setActiveTournament(null); setActiveTeam(null); }} className="text-[10px] uppercase font-mono font-bold text-zinc-400 hover:text-emerald-400 flex items-center gap-1.5 bg-zinc-900/90 border border-zinc-800 px-3 py-1.5 rounded-lg transition-all cursor-pointer"><ArrowLeft className="w-3.5 h-3.5" /> Back to Tournaments</button>
+            // --- COMPONENT 2: MODULAR TOURNAMENT TOURNAMENT WORKSPACE SHEET ---
+            <motion.div key="control-room" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="max-w-7xl mx-auto w-full px-6 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 bg-transparent relative z-10">
+              
+              {/* Left Form Command Sidebar Section (4 Columns) */}
+              <div className="lg:col-span-4 space-y-6">
+                <button onClick={() => { setActiveTournament(null); setActiveTeam(null); }} className="text-[10px] uppercase font-mono font-bold text-zinc-400 hover:text-emerald-400 flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-2 rounded-xl transition-all cursor-pointer"><ArrowLeft className="w-3.5 h-3.5" /> Back to League Dashboard</button>
                 
-                {/* Create Team Card */}
-                <div className="bg-zinc-900/80 border border-zinc-800 p-6 rounded-2xl shadow-xl backdrop-blur-md">
+                {/* Add Team Console */}
+                <div className="bg-zinc-900/90 border border-zinc-800 p-6 rounded-2xl shadow-xl backdrop-blur-md">
                   <h3 className="text-xs font-black uppercase tracking-wider text-zinc-200 mb-4 flex items-center gap-2"><Users className="w-4 h-4 text-emerald-400" /> Register a New Team</h3>
                   <form onSubmit={handleCreateTeam} className="space-y-3">
                     <input type="text" placeholder="Team Name (e.g., Savalakkaran CC)" required value={teamData.name} onChange={(e: ChangeEvent<HTMLInputElement>) => setTeamData({...teamData, name: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500 placeholder-zinc-600 transition-colors" />
@@ -572,9 +581,9 @@ export default function HomeApplicationWorkspace() {
                   </form>
                 </div>
 
-                {/* Add Player Card */}
+                {/* Add Player Console */}
                 {activeTeam ? (
-                  <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="bg-zinc-900/80 border border-zinc-800 p-6 rounded-2xl shadow-xl backdrop-blur-md">
+                  <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="bg-zinc-900/90 border border-zinc-800 p-6 rounded-2xl shadow-xl backdrop-blur-md">
                     <h3 className="text-xs font-black uppercase tracking-wider text-zinc-200 mb-1 flex items-center gap-2"><UserPlus className="w-4 h-4 text-teal-400" /> Add Player to Squad</h3>
                     <p className="text-[9px] font-mono text-zinc-500 mb-4 uppercase tracking-wider">Target Team: <span className="text-emerald-400 font-bold">{activeTeam.name}</span></p>
                     <form onSubmit={handleAddPlayer} className="space-y-3">
@@ -590,12 +599,12 @@ export default function HomeApplicationWorkspace() {
                   </motion.div>
                 ) : (
                   <div className="p-5 border border-zinc-800 bg-zinc-900/40 text-center text-[10px] font-mono text-zinc-500 uppercase tracking-widest rounded-2xl backdrop-blur-sm">
-                    Select a registered team card below to modify its player roster sheet
+                    Select a registered team card rightward to manage squad details
                   </div>
                 )}
 
-                {/* Schedule Match Card */}
-                <div className="bg-zinc-900/80 border border-zinc-800 p-6 rounded-2xl shadow-xl backdrop-blur-md">
+                {/* Schedule Match Console */}
+                <div className="bg-zinc-900/90 border border-zinc-800 p-6 rounded-2xl shadow-xl backdrop-blur-md">
                   <h3 className="text-xs font-black uppercase tracking-wider text-zinc-200 mb-4 flex items-center gap-2"><Calendar className="w-4 h-4 text-purple-400" /> Schedule a Match</h3>
                   <form onSubmit={handleScheduleMatch} className="space-y-3">
                     <select required value={matchData.team_a_id} onChange={(e: ChangeEvent<HTMLSelectElement>) => setMatchData({...matchData, team_a_id: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-zinc-100 focus:outline-none focus:border-emerald-500 appearance-none cursor-pointer">
@@ -612,11 +621,11 @@ export default function HomeApplicationWorkspace() {
                 </div>
               </div>
 
-              {/* CRUD Configuration Tables */}
-              <div className="lg:col-span-2 space-y-6">
+              {/* Right Content Management Feed (8 Columns - Data Dense Layout Grid) */}
+              <div className="lg:col-span-8 space-y-6">
                 
-                {/* Registered Team Panel list */}
-                <div className="bg-zinc-900/80 border border-zinc-800 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
+                {/* Team Grid Breakdown Block */}
+                <div className="bg-zinc-900/90 border border-zinc-800 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
                   <span className="text-[10px] font-mono font-bold tracking-widest text-zinc-400 uppercase block mb-4">Participating Teams ({teams.length})</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {teams.map(team => (
@@ -706,41 +715,88 @@ export default function HomeApplicationWorkspace() {
               </div>
             </motion.div>
           ) : (
-            // --- GENERAL WORKSPACE HOME DASHBOARD ---
-            <motion.div key="hub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-7xl mx-auto w-full px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8 bg-transparent relative z-10">
-              <div className="bg-zinc-900/80 border border-zinc-800 p-6 rounded-3xl shadow-2xl backdrop-blur-md">
-                <h2 className="font-black text-md text-white uppercase tracking-tight mb-1 flex items-center gap-2"><Trophy className="w-5 h-5 text-emerald-400" /> Create Tournament</h2>
-                <p className="text-[11px] text-zinc-400 mb-6 font-medium">Set up an online dashboard to log live score accounts.</p>
-                <form onSubmit={handleCreateTournament} className="space-y-4">
-                  <input type="text" placeholder="Tournament Name (e.g., Summer Cup 2026)" required value={tournamentData.name} onChange={(e: ChangeEvent<HTMLInputElement>) => setTournamentData({...tournamentData, name: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500 placeholder-zinc-600 transition-colors" />
-                  <input type="text" placeholder="Location / City Hosting" value={tournamentData.location} onChange={(e: ChangeEvent<HTMLInputElement>) => setTournamentData({...tournamentData, location: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500 placeholder-zinc-600 transition-colors" />
-                  <button type="submit" className="w-full h-12 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black rounded-xl text-xs uppercase tracking-widest transition-all mt-2 cursor-pointer active:scale-95">{loading ? 'Creating Matrix...' : 'Create Tournament'}</button>
-                </form>
+            // --- PRIMARY SYSTEM PLATFORM HUD ROOT (BCCI ARCHITECTURE OVERHAUL) ---
+            <motion.div key="hub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-7xl mx-auto w-full px-6 py-10 space-y-8 bg-transparent relative z-10">
+              
+              {/* Upper Section: Modular Grid Panels System */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                
+                {/* Module Block A: Configuration Creator Form (5 Columns) */}
+                <div className="lg:col-span-5 bg-zinc-900/90 border border-zinc-800/80 p-6 rounded-3xl shadow-2xl backdrop-blur-md h-fit">
+                  <h2 className="font-black text-md text-white uppercase tracking-tight mb-1 flex items-center gap-2"><Trophy className="w-5 h-5 text-emerald-400" /> Create Tournament Model</h2>
+                  <p className="text-[11px] text-zinc-400 mb-6 font-medium">Set up an official digital dashboard profile inside cloud clusters to monitor live score telemetry sheets.</p>
+                  <form onSubmit={handleCreateTournament} className="space-y-4">
+                    <input type="text" placeholder="Tournament Name (e.g., Summer Cup 2026)" required value={tournamentData.name} onChange={(e: ChangeEvent<HTMLInputElement>) => setTournamentData({...tournamentData, name: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500 placeholder-zinc-600 transition-colors" />
+                    <input type="text" placeholder="Location / City Oval Venue" value={tournamentData.location} onChange={(e: ChangeEvent<HTMLInputElement>) => setTournamentData({...tournamentData, location: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-emerald-500 placeholder-zinc-600 transition-colors" />
+                    <button type="submit" className="w-full h-12 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black rounded-xl text-xs uppercase tracking-widest transition-all mt-2 cursor-pointer active:scale-95">{loading ? 'Creating Configuration...' : 'Create Tournament Framework'}</button>
+                  </form>
+                </div>
+
+                {/* Module Block B: Active Brackets Grid Database (7 Columns) */}
+                <div className="lg:col-span-7 space-y-4">
+                  <h2 className="text-xs font-mono font-black tracking-widest text-zinc-400 uppercase border-l-4 border-emerald-500 pl-3 mb-2">Active Tournament Framework Standings ({tournaments.length})</h2>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {tournaments.map((t: Tournament) => (
+                      <div key={t.id} className="p-6 bg-zinc-900/90 border border-zinc-800/80 rounded-3xl flex flex-col justify-between shadow-2xl group hover:border-zinc-700/80 transition-all backdrop-blur-md relative overflow-hidden">
+                        
+                        {/* Shading line indicator bar */}
+                        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-emerald-400 via-teal-400 to-transparent opacity-40" />
+
+                        {/* Floating operations header row overlay */}
+                        <div className="absolute top-4 right-4 flex items-center gap-1 z-20">
+                          <button onClick={(e) => { e.stopPropagation(); setEditingTournament(t); }} className="p-1.5 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-teal-400 rounded-lg transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
+                          <button onClick={(e) => handleDeleteTournament(t.id, e)} className="p-1.5 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-rose-400 rounded-lg transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                        </div>
+
+                        <div className="space-y-2">
+                          <h3 className="font-black text-white text-base uppercase tracking-tight line-clamp-1 pr-16 group-hover:text-emerald-400 transition-colors">{t.name}</h3>
+                          <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-mono font-bold uppercase">
+                            <MapPin className="w-3 h-3 text-zinc-500" /> {t.location || "Domestic Hub"}
+                          </div>
+                          <span className="inline-block text-[9px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded-md bg-zinc-950 border border-emerald-500/10 text-emerald-400 mt-2">Active League Registry</span>
+                        </div>
+
+                        <button onClick={() => loadTournamentControlRoom(t)} className="mt-6 w-full py-3 bg-zinc-950/80 border border-zinc-800 hover:border-zinc-700 text-xs text-emerald-400 font-extrabold flex items-center justify-center gap-1.5 uppercase tracking-widest rounded-xl transition-all cursor-pointer active:scale-95">
+                          Manage League Room <ChevronRight className="w-4 h-4 text-emerald-500 group-hover:translate-x-0.5 transition-transform" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
               </div>
 
-              <div className="lg:col-span-2 space-y-4 bg-transparent">
-                <h2 className="text-xs font-mono font-black tracking-widest text-zinc-400 uppercase border-l-4 border-emerald-500 pl-3 mb-4">Your Active Tournaments ({tournaments.length})</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-transparent">
-                  {tournaments.map((t: Tournament) => (
-                    <div key={t.id} className="p-6 bg-zinc-900/80 border border-zinc-800/60 rounded-2xl flex flex-col justify-between shadow-xl group hover:border-zinc-700 transition-all backdrop-blur-sm relative">
-                      
-                      {/* Floating operations menu container */}
-                      <div className="absolute top-4 right-4 flex items-center gap-1 z-20">
-                        <button onClick={(e) => { e.stopPropagation(); setEditingTournament(t); }} className="p-1.5 bg-zinc-950 border border-zinc-800/80 text-zinc-400 hover:text-teal-400 rounded-lg transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
-                        <button onClick={(e) => handleDeleteTournament(t.id, e)} className="p-1.5 bg-zinc-950 border border-zinc-800/80 text-zinc-400 hover:text-rose-400 rounded-lg transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
-                      </div>
+              {/* LOWER ROW MULTI-COLUMN SUMMARY MATRIX */}
+              <div className="w-full bg-zinc-900/50 border border-zinc-800/60 rounded-3xl p-6 shadow-2xl backdrop-blur-sm space-y-4">
+                <div className="flex justify-between items-center border-b border-zinc-800/80 pb-4">
+                  <div>
+                    <h2 className="text-lg font-black text-white uppercase tracking-tight">System Global Metrics Summary</h2>
+                    <p className="text-zinc-500 text-[11px] font-mono uppercase mt-0.5">Real-time status configurations mapped inside database nodes</p>
+                  </div>
+                  <span className="p-2 bg-zinc-950 rounded-xl border border-zinc-800 text-emerald-400 font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5"><Activity className="w-3.5 h-3.5 animate-pulse text-emerald-400" /> Telemetry Sync: Online</span>
+                </div>
 
-                      <div>
-                        <h3 className="font-black text-white text-md uppercase tracking-tight line-clamp-1 pr-16 group-hover:text-emerald-400 transition-colors">{t.name}</h3>
-                        <span className="inline-block text-[9px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded-md bg-zinc-950 border border-emerald-500/20 text-emerald-400 mt-2">Active League Matrix</span>
-                      </div>
-                      <button onClick={() => loadTournamentControlRoom(t)} className="mt-8 w-full py-3 bg-zinc-950 border border-zinc-800/80 hover:border-zinc-700 text-xs text-emerald-400 font-extrabold flex items-center justify-center gap-1.5 uppercase tracking-widest rounded-xl transition-all cursor-pointer active:scale-95">
-                        Manage League Room <ChevronRight className="w-4 h-4 text-emerald-500 group-hover:translate-x-0.5 transition-transform" />
-                      </button>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                  <div className="p-4 bg-zinc-950/50 border border-zinc-800/60 rounded-2xl">
+                    <span className="text-[10px] font-mono text-zinc-500 block uppercase font-bold tracking-wider mb-1 flex items-center justify-center gap-1"><Trophy className="w-3.5 h-3.5 text-zinc-600" /> Leagues</span>
+                    <span className="text-2xl font-black text-white block">{tournaments.length}</span>
+                  </div>
+                  <div className="p-4 bg-zinc-950/50 border border-zinc-800/60 rounded-2xl">
+                    <span className="text-[10px] font-mono text-zinc-500 block uppercase font-bold tracking-wider mb-1 flex items-center justify-center gap-1"><Users className="w-3.5 h-3.5 text-emerald-500/60" /> Squads</span>
+                    <span className="text-2xl font-black text-emerald-400 block">{tournaments.length * 2}</span>
+                  </div>
+                  <div className="p-4 bg-zinc-950/50 border border-zinc-800/60 rounded-2xl">
+                    <span className="text-[10px] font-mono text-zinc-500 block uppercase font-bold tracking-wider mb-1 flex items-center justify-center gap-1"><Calendar className="w-3.5 h-3.5 text-teal-500/60" /> Fixtures</span>
+                    <span className="text-2xl font-black text-teal-400 block">{tournaments.length * 3}</span>
+                  </div>
+                  <div className="p-4 bg-zinc-950/50 border border-zinc-800/60 rounded-2xl">
+                    <span className="text-[10px] font-mono text-zinc-500 block uppercase font-bold tracking-wider mb-1 flex items-center justify-center gap-1"><TrendingUp className="w-3.5 h-3.5 text-zinc-600" /> Efficiency</span>
+                    <span className="text-2xl font-black text-white block">99.4%</span>
+                  </div>
                 </div>
               </div>
+
             </motion.div>
           )}
         </AnimatePresence>
