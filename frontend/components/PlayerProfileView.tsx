@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { User, Shield, Award, Calendar, BarChart3, Swords, Activity, Target } from 'lucide-react';
+import { User, Shield, Calendar, BarChart3, Swords } from 'lucide-react';
 import { PlayerProfile } from '@/types/cricket';
 
 interface PlayerProfileProps {
@@ -24,18 +24,22 @@ export default function PlayerProfileView({ profile }: PlayerProfileProps) {
           <div className="space-y-1.5">
             <h1 className="text-2xl font-black uppercase tracking-tight text-white">{profile.name}</h1>
             <p className="text-xs font-mono font-bold text-emerald-400 flex items-center justify-center sm:justify-start gap-1 uppercase">
-              <Shield size={14} className="animate-pulse" /> {profile.teamName}
+              <Shield size={14} className="animate-pulse" /> {profile.team_name}
             </p>
             <div className="flex flex-wrap justify-center sm:justify-start gap-1.5 pt-2">
-              <span className="px-2.5 py-1 text-[10px] font-mono font-bold uppercase bg-zinc-950 border border-zinc-800 text-zinc-300 rounded-lg shadow-inner">
-                {profile.role}
-              </span>
-              <span className="px-2.5 py-1 text-[10px] font-mono font-bold uppercase bg-zinc-950 border border-zinc-800 text-zinc-300 rounded-lg shadow-inner">
-                {profile.battingStyle}
-              </span>
-              {profile.bowlingStyle && (
+              {profile.playing_role && (
                 <span className="px-2.5 py-1 text-[10px] font-mono font-bold uppercase bg-zinc-950 border border-zinc-800 text-zinc-300 rounded-lg shadow-inner">
-                  {profile.bowlingStyle}
+                  {profile.playing_role}
+                </span>
+              )}
+              {profile.batting_style && (
+                <span className="px-2.5 py-1 text-[10px] font-mono font-bold uppercase bg-zinc-950 border border-zinc-800 text-zinc-300 rounded-lg shadow-inner">
+                  {profile.batting_style}
+                </span>
+              )}
+              {profile.bowling_style && profile.bowling_style !== "None" && (
+                <span className="px-2.5 py-1 text-[10px] font-mono font-bold uppercase bg-zinc-950 border border-zinc-800 text-zinc-300 rounded-lg shadow-inner">
+                  {profile.bowling_style}
                 </span>
               )}
             </div>
@@ -46,15 +50,15 @@ export default function PlayerProfileView({ profile }: PlayerProfileProps) {
         <div className="flex gap-6 border-t md:border-t-0 md:border-l border-zinc-800 pt-4 md:pt-0 md:pl-8 w-full md:w-auto justify-around">
           <div className="text-center min-w-[70px]">
             <p className="text-[10px] font-mono text-zinc-500 uppercase font-bold tracking-widest">Matches</p>
-            <p className="text-3xl font-black text-white mt-1">{profile.stats.batting.matches}</p>
+            <p className="text-3xl font-black text-white mt-1">{profile.batting?.matches ?? 0}</p>
           </div>
           <div className="text-center min-w-[70px]">
             <p className="text-[10px] font-mono text-zinc-500 uppercase font-bold tracking-widest">Runs</p>
-            <p className="text-3xl font-black text-emerald-400 mt-1">{profile.stats.batting.runs}</p>
+            <p className="text-3xl font-black text-emerald-400 mt-1">{profile.batting?.total_runs ?? 0}</p>
           </div>
           <div className="text-center min-w-[70px]">
             <p className="text-[10px] font-mono text-zinc-500 uppercase font-bold tracking-widest">Wickets</p>
-            <p className="text-3xl font-black text-teal-400 mt-1">{profile.stats.bowling.wickets}</p>
+            <p className="text-3xl font-black text-teal-400 mt-1">{profile.bowling?.total_wickets ?? 0}</p>
           </div>
         </div>
       </div>
@@ -70,24 +74,24 @@ export default function PlayerProfileView({ profile }: PlayerProfileProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 bg-zinc-950 border border-zinc-800/50 rounded-xl">
               <span className="text-[10px] font-mono font-bold text-zinc-500 block uppercase tracking-wider">Innings</span>
-              <span className="text-md font-bold text-white">{profile.stats.batting.innings}</span>
+              <span className="text-md font-bold text-white">{profile.batting?.innings ?? 0}</span>
             </div>
             <div className="p-3 bg-zinc-950 border border-zinc-800/50 rounded-xl">
               <span className="text-[10px] font-mono font-bold text-zinc-500 block uppercase tracking-wider">Highest Score</span>
-              <span className="text-md font-bold text-white">{profile.stats.batting.highestScore}</span>
+              <span className="text-md font-bold text-white">{profile.batting?.highest_score ?? 0}</span>
             </div>
             <div className="p-3 bg-zinc-950 border border-zinc-800/50 rounded-xl">
               <span className="text-[10px] font-mono font-bold text-zinc-500 block uppercase tracking-wider">Average</span>
-              <span className="text-md font-bold text-white">{profile.stats.batting.average}</span>
+              <span className="text-md font-bold text-white">{profile.batting?.average ?? 0}</span>
             </div>
             <div className="p-3 bg-zinc-950 border border-zinc-800/50 rounded-xl">
               <span className="text-[10px] font-mono font-bold text-zinc-500 block uppercase tracking-wider">Strike Rate</span>
-              <span className="text-md font-bold text-white">{profile.stats.batting.strikeRate}</span>
+              <span className="text-md font-bold text-white">{profile.batting?.strike_rate ?? 0}</span>
             </div>
             <div className="p-3 bg-zinc-950 border border-zinc-800/50 rounded-xl col-span-2 flex justify-between items-center">
               <span className="text-[10px] font-mono font-bold text-zinc-500 uppercase tracking-wider">Fifties / Hundreds</span>
               <span className="text-md font-black text-emerald-400 font-mono">
-                {profile.stats.batting.fifties} <span className="text-zinc-700 mx-1">|</span> {profile.stats.batting.hundreds}
+                {profile.batting?.fifties ?? 0} <span className="text-zinc-700 mx-1">|</span> {profile.batting?.hundreds ?? 0}
               </span>
             </div>
           </div>
@@ -101,23 +105,23 @@ export default function PlayerProfileView({ profile }: PlayerProfileProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 bg-zinc-950 border border-zinc-800/50 rounded-xl">
               <span className="text-[10px] font-mono font-bold text-zinc-500 block uppercase tracking-wider">Innings Bowled</span>
-              <span className="text-md font-bold text-white">{profile.stats.bowling.innings}</span>
+              <span className="text-md font-bold text-white">{profile.bowling?.innings ?? 0}</span>
             </div>
             <div className="p-3 bg-zinc-950 border border-zinc-800/50 rounded-xl">
               <span className="text-[10px] font-mono font-bold text-zinc-500 block uppercase tracking-wider">Wickets</span>
-              <span className="text-md font-bold text-white">{profile.stats.bowling.wickets}</span>
+              <span className="text-md font-bold text-white">{profile.bowling?.total_wickets ?? 0}</span>
             </div>
             <div className="p-3 bg-zinc-950 border border-zinc-800/50 rounded-xl">
               <span className="text-[10px] font-mono font-bold text-zinc-500 block uppercase tracking-wider">Economy Rate</span>
-              <span className="text-md font-bold text-white">{profile.stats.bowling.economy}</span>
+              <span className="text-md font-bold text-white">{profile.bowling?.economy ?? 0}</span>
             </div>
             <div className="p-3 bg-zinc-950 border border-zinc-800/50 rounded-xl">
               <span className="text-[10px] font-mono font-bold text-zinc-500 block uppercase tracking-wider">Bowling Avg</span>
-              <span className="text-md font-bold text-white">{profile.stats.bowling.average}</span>
+              <span className="text-md font-bold text-white">{profile.bowling?.average ?? 0}</span>
             </div>
             <div className="p-3 bg-zinc-950 border border-zinc-800/50 rounded-xl col-span-2 flex justify-between items-center">
               <span className="text-[10px] font-mono font-bold text-zinc-500 uppercase tracking-wider">Best Bowling Figures</span>
-              <span className="text-md font-black text-teal-400 font-mono">{profile.stats.bowling.bestBowling}</span>
+              <span className="text-md font-black text-teal-400 font-mono">{profile.bowling?.best_bowling ?? "0/0"}</span>
             </div>
           </div>
         </div>
@@ -142,35 +146,47 @@ export default function PlayerProfileView({ profile }: PlayerProfileProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800 text-xs font-bold text-zinc-300">
-              {profile.recentMatches.map((match) => (
-                <tr key={match.matchId} className="hover:bg-zinc-950/40 transition-colors">
-                  <td className="p-4">
-                    <span className="block font-black text-white uppercase tracking-tight text-sm">vs {match.opponent}</span>
-                    <span className="text-[10px] font-mono font-medium text-zinc-500 mt-0.5 block">{match.date}</span>
-                  </td>
-                  <td className="p-4 text-sm font-black text-white">
-                    {match.runsScored} <span className="text-zinc-500 text-xs font-medium font-mono">({match.ballsFaced}b)</span>
-                  </td>
-                  <td className="p-4">
-                    {match.wicketsTaken > 0 ? (
-                      <span className="px-2.5 py-0.5 bg-teal-500/10 border border-teal-500/20 text-teal-400 rounded-lg text-[10px] font-mono font-bold tracking-wider uppercase">
-                        {match.wicketsTaken} Wkts / {match.runsConceded} Runs
+              {profile.recent_matches && profile.recent_matches.length > 0 ? (
+                profile.recent_matches.map((match) => (
+                  <tr key={match.match_id} className="hover:bg-zinc-950/40 transition-colors">
+                    <td className="p-4">
+                      <span className="block font-black text-white uppercase tracking-tight text-sm">vs {match.opponent_name}</span>
+                      {match.venue && (
+                        <span className="text-[10px] font-mono font-medium text-zinc-500 mt-0.5 block">{match.venue}</span>
+                      )}
+                    </td>
+                    <td className="p-4 text-sm font-black text-white">
+                      {match.runs_scored} <span className="text-zinc-500 text-xs font-medium font-mono">({match.balls_faced}b)</span>
+                    </td>
+                    <td className="p-4">
+                      {match.wickets_taken > 0 ? (
+                        <span className="px-2.5 py-0.5 bg-teal-500/10 border border-teal-500/20 text-teal-400 rounded-lg text-[10px] font-mono font-bold tracking-wider uppercase">
+                          {match.wickets_taken} Wkts / {match.runs_conceded} Runs
+                        </span>
+                      ) : (
+                        <span className="text-zinc-500 font-mono font-medium text-[10px]">
+                          0 Wickets ({Number(match.overs_bowled || 0)} Ov)
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-block font-mono text-[10px] uppercase font-bold px-2 py-1 rounded-md border tracking-wider ${
+                        (match.result_description || match.match_status || '').toLowerCase().includes('won') 
+                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                          : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                      }`}>
+                        {match.result_description || match.match_status}
                       </span>
-                    ) : (
-                      <span className="text-zinc-500 font-mono font-medium text-[10px]">0 Wickets</span>
-                    )}
-                  </td>
-                  <td className="p-4">
-                    <span className={`inline-block font-mono text-[10px] uppercase font-bold px-2 py-1 rounded-md border tracking-wider ${
-                      match.result.toLowerCase().includes('won') 
-                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
-                        : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
-                    }`}>
-                      {match.result}
-                    </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="p-8 text-center text-zinc-500 font-mono tracking-wide">
+                    No historic match data available for this profile.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
